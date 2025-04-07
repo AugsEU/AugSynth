@@ -1,0 +1,6 @@
+C:/Users/Augus/Documents/Programming/Arduino/OrganTasque/BpSynth/AugSynth/CMakeFiles/AugSynth.dir
+C:/Users/Augus/Documents/Programming/Arduino/OrganTasque/BpSynth/AugSynth/CMakeFiles/edit_cache.dir
+C:/Users/Augus/Documents/Programming/Arduino/OrganTasque/BpSynth/AugSynth/CMakeFiles/rebuild_cache.dir
+C:/Users/Augus/Documents/Programming/Arduino/OrganTasque/BpSynth/AugSynth/cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir
+C:/Users/Augus/Documents/Programming/Arduino/OrganTasque/BpSynth/AugSynth/cmake/stm32cubemx/CMakeFiles/edit_cache.dir
+C:/Users/Augus/Documents/Programming/Arduino/OrganTasque/BpSynth/AugSynth/cmake/stm32cubemx/CMakeFiles/rebuild_cache.dir

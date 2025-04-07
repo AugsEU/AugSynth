@@ -1,0 +1,3 @@
+Drivers/
+build/
+STM32F411XX_FLASH.ld
