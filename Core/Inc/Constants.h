@@ -1,9 +1,9 @@
 #ifndef INC_CONSTANTS_H_
 #define INC_CONSTANTS_H_
 
-#define SAMPLERATE              32000
+#define SAMPLE_RATE             32000
+#define SAMPLE_PERIOD           (1.0f/SAMPLE_RATE)
 
-#define A_Ts                    (1.0f/SAMPLERATE)  // sample period
 #define A_2PI                   6.283185307f
 #define A_PI                    3.14159265f
 

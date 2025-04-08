@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "wavegen.h": "c",
+        "constants.h": "c",
+        "main.h": "c"
+    }
+}
