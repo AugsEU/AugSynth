@@ -2,11 +2,11 @@
 #include "Constants.h"
 
 /// @brief Initialise an oscillator 
-void OscInit(Oscillator_t* osc, float_t volume)
+void OscInit(Oscillator_t* osc)
 {
-    osc->mVol = volume;
-    osc->mPhaseInc = 0.0f;
-    osc->mPhase = 0.0f;
+    osc->mVol = 0;
+    osc->mPhaseInc = 0;
+    osc->mPhase = 0;
 }
 
 
@@ -14,7 +14,15 @@ void OscInit(Oscillator_t* osc, float_t volume)
 /// @brief Set oscillator frequency.
 void OscFreqSet(Oscillator_t* osc, float_t hertz)
 {
-    osc->mPhaseInc = A_2PI * SAMPLE_PERIOD * hertz;
+    osc->mPhaseInc = ((uint16_t)hertz << 16) / SAMPLE_RATE;
+}
+
+
+
+/// @brief Set osc volume
+void OscVolumeSet(Oscillator_t* osc, float_t volume)
+{
+    osc->mVol = (uint32_t)(65536.0f * volume) & 0xFFFF;
 }
 
 
@@ -23,24 +31,14 @@ void OscFreqSet(Oscillator_t* osc, float_t hertz)
 void OscPhaseInc(Oscillator_t* osc)
 {
     osc->mPhase += osc->mPhaseInc;
-
-	if (osc->mPhase >= A_2PI)
-    {
-		osc->mPhase -= A_2PI;
-    }
+    osc->mPhase &= 0xFFFF; // Wrap around.
 }
 
 
 
 
 /// @brief Get value of oscillator as saw tooth.
-float_t OscSawTooth(float_t phase)
+uint32_t OscSawTooth(uint32_t phase)
 {
-    float_t value = (1.0f / A_PI) * phase;
-	if (phase >= A_PI)
-    {
-        value -= 2.0f;
-    }
-
-    return value;
+    return ((phase+32768) << 1) & 0xFFFF;
 }

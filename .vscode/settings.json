@@ -3,6 +3,8 @@
         "wavegen.h": "c",
         "constants.h": "c",
         "main.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "type_traits": "c",
+        "xtr1common": "c"
     }
 }

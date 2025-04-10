@@ -20,8 +20,7 @@ void SynthInit(void)
 {
 	for(int i = 0; i < MIDI_POLYPHONY; i++)
 	{
-		OscInit(&gOscBank[i], 0.0f);
-		
+		OscInit(&gOscBank[i]);
 	}
 }
 
@@ -33,33 +32,30 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 {
 	uint16_t pos;
 	uint16_t* outp = buf;
-	uint16_t value;
 
 	for(int i = 0; i < MIDI_POLYPHONY; i++)
 	{
 		uint8_t velocity = gPlayingNotes[i].mNoteVelocity;
 		uint8_t noteIdx = gPlayingNotes[i].mNoteIdx;
 		
-		OscFreqSet(&gOscBank[i], NoteToFreq12TET(noteIdx));
-		gOscBank[i].mVol = VelocityToVolume(velocity);
+		OscFreqSet(&gOscBank[i], NoteToFreq12JC(noteIdx));
+		OscVolumeSet(&gOscBank[i], VelocityToVolume(velocity));
 	}
 
 	for (pos = 0; pos < samples; pos++)
 	{
 		/*--- Generate waveform ---*/
-		float_t	y = 0.0f;
+		uint32_t y = 0;
 
 		for(int i = 0; i < MIDI_POLYPHONY; i++)
 		{
 			OscPhaseInc(&gOscBank[i]);
-			y += OscSawTooth(gOscBank[i].mPhase) * gOscBank[i].mVol;
+			uint32_t temp = OscSawTooth(gOscBank[i].mPhase);
+			temp *= gOscBank[i].mVol;
+			y += temp >> 16;
 		}
 
-		/*--- clipping ---*/
-		y = (y > 1.0f) ? 1.0f : y; //clip too loud left samples
-		y = (y < -1.0f) ? -1.0f : y;
-
-		value = (uint16_t)((int16_t)((32767.0f) * y)); 
+		uint16_t value = (uint32_t)(y & 0xFFFF);
 
 		*outp++ = value;
 		*outp++ = value;

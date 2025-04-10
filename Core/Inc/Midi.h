@@ -18,7 +18,7 @@
 #define MIDI_CMD_CHANNEL 0x0F
 
 #define MIDI_CHANNEL 0x00 // Midi channel we are listening to
-#define MIDI_POLYPHONY 70
+#define MIDI_POLYPHONY 109
 #define MIDI_NUM_NOTES 127
 
 

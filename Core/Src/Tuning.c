@@ -15,6 +15,21 @@ const float_t TwelveTET[12] = {
     30.8677063285077509f,
 };
 
+const float_t TwelveJC[12] = {
+    16.3515978312f,
+    17.4417043534f,
+    18.3955475602f,
+    19.6219173975f,
+    20.4394972891f,
+    21.8021304417f,
+    23.2556058045f,
+    24.5273967469f,
+    26.1625565301f,
+    27.2526630521f,
+    29.0695072556f,
+    30.6592459337f,
+};
+
 
 /// @brief Convert note index to frequency.
 float_t NoteToFreq12TET(uint8_t note)
@@ -28,6 +43,29 @@ float_t NoteToFreq12TET(uint8_t note)
     }
 
     float_t freq = TwelveTET[note];
+
+    while (octave > 0)
+    {
+        freq *= 2.0f;
+        octave--;
+    }
+
+    return freq;
+}
+
+
+/// @brief Convert note index to frequency.
+float_t NoteToFreq12JC(uint8_t note)
+{
+    //@TODO: Optimise? Full lookup table?
+    uint8_t octave = 0;
+    while (note >= 12)
+    {
+        octave++;
+        note -= 12;
+    }
+
+    float_t freq = TwelveJC[note];
 
     while (octave > 0)
     {
