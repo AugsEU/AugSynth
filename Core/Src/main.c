@@ -20,6 +20,7 @@
 #include "main.h"
 #include "Constants.h"
 #include "WaveGen.h"
+#include "Midi.h"
 
 /* ----------------------------------------------------------------------------*/
 /* Globals --------------------------------------------------------------------*/
@@ -28,6 +29,9 @@ DMA_HandleTypeDef hdma_spi1_tx;
 UART_HandleTypeDef huart2;
 
 uint16_t gAudioBuffer[AUDIO_BUFF_LEN];
+uint8_t gRxBuff[RX_BUFF_LEN];
+uint8_t gMidiBuff[RX_BUFF_LEN];
+uint8_t gMidiBuffIdx = 0;
 
 /* ----------------------------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
@@ -60,6 +64,42 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef* hi2s)
 }
 
 
+//callback when a value is received at the midi port
+// (the HAL_NVIC_SetPriority in HAL_UART_MspInit must be set to 0!)
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	uint8_t rxByte = gRxBuff[0];
+	if (gMidiBuffIdx >= RX_BUFF_LEN - 1)
+	{
+		// Overflow...
+	}
+	else if (rxByte >= MIDI_CMD_SYS_EX)
+	{
+		//System commands. Ignore for now.
+	}
+	else if (rxByte & MIDI_CMD_MSG)
+	{
+		// Command byte
+		gMidiBuff[0] = gRxBuff[0];
+		gMidiBuffIdx = 0;
+	}
+	else
+	{
+		// Data byte
+		gMidiBuffIdx++;
+		gMidiBuff[gMidiBuffIdx] = rxByte; 
+
+		if (gMidiBuffIdx >= RX_BUFF_LEN - 1)
+		{
+			ProcessMidiMessage(gMidiBuff);
+			gMidiBuffIdx = 0;
+		}
+	}
+
+	HAL_UART_Receive_IT(&huart2, gRxBuff, 1);
+}
+
+
 
 /**
 	* @brief  The application entry point.
@@ -88,7 +128,7 @@ int main(void)
 	/* Infinite loop */
 	while (1)
 	{
-
+		HAL_UART_Receive_IT(&huart2, gRxBuff, 1);
 	}
 }
 
