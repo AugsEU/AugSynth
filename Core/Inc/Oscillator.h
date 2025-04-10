@@ -8,13 +8,14 @@
 typedef struct
 {
 	float_t 	mVol;
-	float_t 	mFreq;	// Hertz
+	float_t 	mPhaseInc;	// Number to increment based on freq.
 	float_t 	mPhase;	// Radians
-	float_t 	mOut;	// Output sample
 } Oscillator_t;
 
 void OscInit(Oscillator_t* osc, float_t volume);
+void OscFreqSet(Oscillator_t* osc, float_t hertz);
 void OscPhaseInc(Oscillator_t* osc);
-float_t OscSawTooth(Oscillator_t* osc);
+
+float_t OscSawTooth(float_t phase);
 
 #endif /* INC_OSCILLATOR_H_ */

@@ -2,6 +2,7 @@
     "files.associations": {
         "wavegen.h": "c",
         "constants.h": "c",
-        "main.h": "c"
+        "main.h": "c",
+        "stdbool.h": "c"
     }
 }

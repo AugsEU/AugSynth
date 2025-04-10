@@ -9,8 +9,6 @@
 /* Globals --------------------------------------------------------------------*/
 Oscillator_t gOscBank[MIDI_POLYPHONY];
 
-uint16_t prevValue;
-
 extern MidiNote_t gPlayingNotes[MIDI_POLYPHONY];
 
 
@@ -35,7 +33,6 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 {
 	uint16_t pos;
 	uint16_t* outp = buf;
-	float_t	y = 0.0f;
 	uint16_t value;
 
 	for(int i = 0; i < MIDI_POLYPHONY; i++)
@@ -43,19 +40,19 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 		uint8_t velocity = gPlayingNotes[i].mNoteVelocity;
 		uint8_t noteIdx = gPlayingNotes[i].mNoteIdx;
 		
-		gOscBank[i].mFreq = NoteToFreq12TET(noteIdx);
+		OscFreqSet(&gOscBank[i], NoteToFreq12TET(noteIdx));
 		gOscBank[i].mVol = VelocityToVolume(velocity);
 	}
 
 	for (pos = 0; pos < samples; pos++)
 	{
 		/*--- Generate waveform ---*/
-		y = 0.0f;
+		float_t	y = 0.0f;
 
 		for(int i = 0; i < MIDI_POLYPHONY; i++)
 		{
 			OscPhaseInc(&gOscBank[i]);
-			y += OscSawTooth(&gOscBank[i]);
+			y += OscSawTooth(gOscBank[i].mPhase) * gOscBank[i].mVol;
 		}
 
 		/*--- clipping ---*/
@@ -65,8 +62,6 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 		value = (uint16_t)((int16_t)((32767.0f) * y)); 
 
 		*outp++ = value;
-		*outp++ = prevValue;
-
-		prevValue = value;
+		*outp++ = value;
 	}
 }

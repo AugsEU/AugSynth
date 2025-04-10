@@ -5,9 +5,16 @@
 void OscInit(Oscillator_t* osc, float_t volume)
 {
     osc->mVol = volume;
-    osc->mFreq = 0.0f;
+    osc->mPhaseInc = 0.0f;
     osc->mPhase = 0.0f;
-    osc->mOut = 0.0f;
+}
+
+
+
+/// @brief Set oscillator frequency.
+void OscFreqSet(Oscillator_t* osc, float_t hertz)
+{
+    osc->mPhaseInc = A_2PI * SAMPLE_PERIOD * hertz;
 }
 
 
@@ -15,7 +22,7 @@ void OscInit(Oscillator_t* osc, float_t volume)
 /// @brief Increment phase of oscillator by 1 sample.
 void OscPhaseInc(Oscillator_t* osc)
 {
-    osc->mPhase += A_2PI * SAMPLE_PERIOD * osc->mFreq;
+    osc->mPhase += osc->mPhaseInc;
 
 	if (osc->mPhase >= A_2PI)
     {
@@ -25,16 +32,15 @@ void OscPhaseInc(Oscillator_t* osc)
 
 
 
+
 /// @brief Get value of oscillator as saw tooth.
-float_t OscSawTooth(Oscillator_t* osc)
+float_t OscSawTooth(float_t phase)
 {
-    float_t value = (1.0f / A_PI) * osc->mPhase;
-	if (osc->mPhase >= A_PI)
+    float_t value = (1.0f / A_PI) * phase;
+	if (phase >= A_PI)
     {
         value -= 2.0f;
     }
-
-    value *= osc->mVol;
 
     return value;
 }

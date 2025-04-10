@@ -50,7 +50,7 @@ static void MX_USART2_UART_Init(void);
 //the BUFF_LEN_DIV4=500 but we are doing left and right samples (*2)= 1000 samples.
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef* hi2s)
 {
-	FillSoundBuffer((uint16_t*) gAudioBuffer, AUDIO_BUFF_LEN_DIV4);
+	FillSoundBuffer(gAudioBuffer, AUDIO_BUFF_LEN_DIV4);
 }
 
 
@@ -60,7 +60,7 @@ void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef* hi2s)
 //doing that we want to fill in the 2nd half again starting at 1000 elements past &audiobuff
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef* hi2s)
 {
-	FillSoundBuffer((uint16_t*) (gAudioBuffer + AUDIO_BUFF_LEN_DIV2), AUDIO_BUFF_LEN_DIV4);
+	FillSoundBuffer(gAudioBuffer + AUDIO_BUFF_LEN_DIV2, AUDIO_BUFF_LEN_DIV4);
 }
 
 
@@ -69,11 +69,8 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef* hi2s)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	uint8_t rxByte = gRxBuff[0];
-	if (gMidiBuffIdx >= RX_BUFF_LEN - 1)
-	{
-		// Overflow...
-	}
-	else if (rxByte >= MIDI_CMD_SYS_EX)
+
+	if (rxByte >= MIDI_CMD_SYS_EX)
 	{
 		//System commands. Ignore for now.
 	}
@@ -81,15 +78,15 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	{
 		// Command byte
 		gMidiBuff[0] = gRxBuff[0];
-		gMidiBuffIdx = 0;
+		gMidiBuffIdx = 1;
 	}
-	else
+	else if (gMidiBuffIdx)
 	{
 		// Data byte
-		gMidiBuffIdx++;
 		gMidiBuff[gMidiBuffIdx] = rxByte; 
+		gMidiBuffIdx++;
 
-		if (gMidiBuffIdx >= RX_BUFF_LEN - 1)
+		if (gMidiBuffIdx >= RX_BUFF_LEN)
 		{
 			ProcessMidiMessage(gMidiBuff);
 			gMidiBuffIdx = 0;
