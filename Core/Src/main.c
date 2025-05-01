@@ -66,34 +66,11 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef* hi2s)
 
 //callback when a value is received at the midi port
 // (the HAL_NVIC_SetPriority in HAL_UART_MspInit must be set to 0!)
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
 {
-	uint8_t rxByte = gRxBuff[0];
+	ProcessMidiMessage(gRxBuff);
 
-	if (rxByte >= MIDI_CMD_SYS_EX)
-	{
-		//System commands. Ignore for now.
-	}
-	else if (rxByte & MIDI_CMD_MSG)
-	{
-		// Command byte
-		gMidiBuff[0] = gRxBuff[0];
-		gMidiBuffIdx = 1;
-	}
-	else if (gMidiBuffIdx)
-	{
-		// Data byte
-		gMidiBuff[gMidiBuffIdx] = rxByte; 
-		gMidiBuffIdx++;
-
-		if (gMidiBuffIdx >= RX_BUFF_LEN)
-		{
-			ProcessMidiMessage(gMidiBuff);
-			gMidiBuffIdx = 0;
-		}
-	}
-
-	HAL_UART_Receive_IT(&huart2, gRxBuff, 1);
+	HAL_UART_Receive_IT(&huart2, gRxBuff, RX_BUFF_LEN);
 }
 
 
@@ -125,7 +102,7 @@ int main(void)
 	/* Infinite loop */
 	while (1)
 	{
-		HAL_UART_Receive_IT(&huart2, gRxBuff, 1);
+		HAL_UART_Receive_IT(&huart2, gRxBuff, RX_BUFF_LEN);
 	}
 }
 
@@ -211,7 +188,7 @@ static void MX_I2S1_Init(void)
 static void MX_USART2_UART_Init(void)
 {
 	huart2.Instance = USART2;
-	huart2.Init.BaudRate = 31250;
+	huart2.Init.BaudRate = 115200;
 	huart2.Init.WordLength = UART_WORDLENGTH_8B;
 	huart2.Init.StopBits = UART_STOPBITS_1;
 	huart2.Init.Parity = UART_PARITY_NONE;

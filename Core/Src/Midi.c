@@ -4,8 +4,7 @@
 /* ----------------------------------------------------------------------------*/
 /* Global variables -----------------------------------------------------------*/
 MidiNote_t gPlayingNotes[MIDI_POLYPHONY];
-uint8_t gNoteTimeIdx = 0;
-
+float gParameters[128];
 
 void NoteOn(uint8_t noteIdx, uint8_t velocity);
 void NoteOff(uint8_t noteIdx);
@@ -18,12 +17,10 @@ void MidiInit(void)
 {
     for (int i = 0; i < MIDI_POLYPHONY; i++)
     {
-        gPlayingNotes[i].mNoteIdx = 0;
+        gPlayingNotes[i].mNoteIdx = 0xFF;
         gPlayingNotes[i].mNoteVelocity = 0;
         gPlayingNotes[i].mTimeStamp = 0;
     }
-
-    gNoteTimeIdx = 0;
 }
 
 
@@ -31,17 +28,21 @@ void MidiInit(void)
 /// @brief Process a midi message.
 void ProcessMidiMessage(uint8_t* buff)
 {
-    uint8_t midiCmd = buff[0] & MIDI_CMD_MASK;
-    uint8_t midiDataByte0 = buff[1];
-    uint8_t midiDataByte1 = buff[2];
+    uint8_t header = buff[0];
+    float paramValue;
 
-    if (midiCmd == MIDI_CMD_NOTE_ON)
+    switch (header)
     {
-        NoteOn(midiDataByte0, midiDataByte1);
-    }
-    else if(midiCmd == MIDI_CMD_NOTE_OFF)
-    {
-        NoteOff(midiDataByte0);
+    case MIDI_NOTE_ON:
+        NoteOn(buff[1], buff[2]);
+        break;
+    case MIDI_NOTE_OFF:
+        NoteOff(buff[1]);
+        break;
+    default: // Param change
+        paramValue = *(float*)(buff+1);
+        gParameters[header & MIDI_PARAM_NUM_MASK] = paramValue;
+        break;
     }
 }
 
@@ -58,6 +59,8 @@ float_t VelocityToVolume(uint8_t velocity)
 /// @brief Turns note on.
 void NoteOn(uint8_t noteIdx, uint8_t velocity)
 {
+    if (velocity == 0) return;
+
     //@TODO: Voice stealing.
     for (int i = 0; i < MIDI_POLYPHONY; i++)
     {
@@ -65,7 +68,6 @@ void NoteOn(uint8_t noteIdx, uint8_t velocity)
         {
             gPlayingNotes[i].mNoteIdx = noteIdx;
             gPlayingNotes[i].mNoteVelocity = velocity;
-            gPlayingNotes[i].mTimeStamp = gNoteTimeIdx++;
             break;
         }
     }
@@ -79,6 +81,7 @@ void NoteOff(uint8_t noteIdx)
         if (gPlayingNotes[i].mNoteIdx == noteIdx)
         {
             gPlayingNotes[i].mNoteVelocity = 0;
+            gPlayingNotes[i].mNoteIdx = 0;
             break;
         }
     }

@@ -21,7 +21,6 @@ void SynthInit(void)
 	for(int i = 0; i < MIDI_POLYPHONY; i++)
 	{
 		OscInit(&gOscBank[i], 0.0f);
-		
 	}
 }
 

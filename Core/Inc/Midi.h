@@ -10,16 +10,11 @@
 
 /* ----------------------------------------------------------------------------*/
 /* Constants ------------------------------------------------------------------*/
-#define MIDI_CMD_MSG 0x80
-#define MIDI_CMD_MASK 0xF0
-#define MIDI_CMD_SYS_EX 0xF0
-#define MIDI_CMD_NOTE_ON 0x90
-#define MIDI_CMD_NOTE_OFF 0x80
-#define MIDI_CMD_CHANNEL 0x0F
+#define MIDI_NOTE_ON 0xC0
+#define MIDI_NOTE_OFF 0x80
+#define MIDI_PARAM_NUM_MASK 0x7F
 
-#define MIDI_CHANNEL 0x00 // Midi channel we are listening to
-#define MIDI_POLYPHONY 70
-#define MIDI_NUM_NOTES 127
+#define MIDI_POLYPHONY 8
 
 
 
