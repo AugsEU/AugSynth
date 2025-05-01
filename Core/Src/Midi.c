@@ -50,7 +50,7 @@ void ProcessMidiMessage(uint8_t* buff)
 /// @brief Convert velocity to volume
 float_t VelocityToVolume(uint8_t velocity)
 {
-    return (0.02f) * (1.0f / 127.0f) * (float_t)velocity; 
+    return (1.0f / (float)MIDI_POLYPHONY) * (1.0f / 127.0f) * (float_t)velocity; 
 }
 
 /* ----------------------------------------------------------------------------*/

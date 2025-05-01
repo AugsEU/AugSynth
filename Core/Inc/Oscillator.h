@@ -16,6 +16,7 @@ void OscInit(Oscillator_t* osc, float_t volume);
 void OscFreqSet(Oscillator_t* osc, float_t hertz);
 void OscPhaseInc(Oscillator_t* osc);
 
-float_t OscSawTooth(float_t phase);
+float_t OscSawTooth(Oscillator_t* osc);
+float_t OscSine(Oscillator_t* osc);
 
 #endif /* INC_OSCILLATOR_H_ */

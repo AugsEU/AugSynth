@@ -47,11 +47,14 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	{
 		/*--- Generate waveform ---*/
 		float_t	y = 0.0f;
+		float_t dy;
 
 		for(int i = 0; i < MIDI_POLYPHONY; i++)
 		{
 			OscPhaseInc(&gOscBank[i]);
-			y += OscSawTooth(gOscBank[i].mPhase) * gOscBank[i].mVol;
+			dy = OscSine(&gOscBank[i]);
+			dy *= gOscBank[i].mVol;
+			y += dy;
 		}
 
 		/*--- clipping ---*/
