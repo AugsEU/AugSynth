@@ -10,7 +10,7 @@
 Oscillator_t gOscBank[MIDI_POLYPHONY];
 
 extern MidiNote_t gPlayingNotes[MIDI_POLYPHONY];
-
+extern float gParameters[128];
 
 /* ----------------------------------------------------------------------------*/
 /* Public functions -----------------------------------------------------------*/
@@ -34,6 +34,8 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	uint16_t* outp = buf;
 	uint16_t value;
 
+	float_t blend = gParameters[0];
+
 	for(int i = 0; i < MIDI_POLYPHONY; i++)
 	{
 		uint8_t velocity = gPlayingNotes[i].mNoteVelocity;
@@ -47,14 +49,19 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	{
 		/*--- Generate waveform ---*/
 		float_t	y = 0.0f;
-		float_t dy;
+		float_t dsi;
+		float_t dst;
 
 		for(int i = 0; i < MIDI_POLYPHONY; i++)
 		{
 			OscPhaseInc(&gOscBank[i]);
-			dy = OscSine(&gOscBank[i]);
-			dy *= gOscBank[i].mVol;
-			y += dy;
+			dsi = OscSine(&gOscBank[i]);
+			dst = OscSawTooth(&gOscBank[i]);
+
+			dst *= blend;
+			dsi *= (1.0f - blend);
+			
+			y += (dst + dsi) * gOscBank[i].mVol;
 		}
 
 		/*--- clipping ---*/
