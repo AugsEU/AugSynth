@@ -3,6 +3,12 @@
         "wavegen.h": "c",
         "constants.h": "c",
         "main.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "stdint.h": "c",
+        "math.h": "c",
+        "envelope.h": "c",
+        "oscillator.h": "c",
+        "midi.h": "c",
+        "params.h": "c"
     }
 }

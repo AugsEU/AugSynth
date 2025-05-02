@@ -24,7 +24,6 @@ typedef struct
 {
     uint8_t mNoteIdx;
     uint8_t mNoteVelocity;
-    uint8_t mTimeStamp;
 } MidiNote_t;
 
 

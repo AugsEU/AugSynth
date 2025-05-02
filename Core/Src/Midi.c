@@ -1,9 +1,11 @@
 #include "Midi.h"
 #include "Constants.h"
+#include "Voice.h"
+#include "Tuning.h"
 
 /* ----------------------------------------------------------------------------*/
 /* Global variables -----------------------------------------------------------*/
-MidiNote_t gPlayingNotes[MIDI_POLYPHONY];
+extern Voice_t gVoiceBank[MIDI_POLYPHONY];
 float gParameters[128];
 
 void NoteOn(uint8_t noteIdx, uint8_t velocity);
@@ -15,12 +17,11 @@ void NoteOff(uint8_t noteIdx);
 /// @brief Initialise midi
 void MidiInit(void)
 {
-    for (int i = 0; i < MIDI_POLYPHONY; i++)
-    {
-        gPlayingNotes[i].mNoteIdx = 0xFF;
-        gPlayingNotes[i].mNoteVelocity = 0;
-        gPlayingNotes[i].mTimeStamp = 0;
-    }
+    // for (int i = 0; i < MIDI_POLYPHONY; i++)
+    // {
+    //     gPlayingNotes[i].mNoteIdx = 0xFF;
+    //     gPlayingNotes[i].mNoteVelocity = 0;
+    // }
 }
 
 
@@ -61,15 +62,23 @@ void NoteOn(uint8_t noteIdx, uint8_t velocity)
 {
     if (velocity == 0) return;
 
-    //@TODO: Voice stealing.
+    int bestVoiceIdx = 0;
+    int bestVoicePrio = 0;
     for (int i = 0; i < MIDI_POLYPHONY; i++)
     {
-        if (gPlayingNotes[i].mNoteVelocity == 0)
+        Voice_t* pVoice = &gVoiceBank[i];
+        int currPrio = VoiceStealPriority(pVoice, noteIdx);
+
+        if (currPrio > bestVoicePrio)
         {
-            gPlayingNotes[i].mNoteIdx = noteIdx;
-            gPlayingNotes[i].mNoteVelocity = velocity;
-            break;
+            bestVoiceIdx = i;
+            bestVoicePrio = currPrio;
         }
+    }
+
+    if (bestVoicePrio > 0)
+    {
+        VoiceOn(&gVoiceBank[bestVoiceIdx], noteIdx);
     }
 }
 
@@ -78,11 +87,9 @@ void NoteOff(uint8_t noteIdx)
 {
     for (int i = 0; i < MIDI_POLYPHONY; i++)
     {
-        if (gPlayingNotes[i].mNoteIdx == noteIdx)
+        if (gVoiceBank[i].mPlayingNoteIdx == noteIdx)
         {
-            gPlayingNotes[i].mNoteVelocity = 0;
-            gPlayingNotes[i].mNoteIdx = 0;
-            break;
+            VoiceOff(&gVoiceBank[i]);
         }
     }
 }

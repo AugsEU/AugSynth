@@ -20,27 +20,17 @@ float PolyBlep(float t, float dt)
 
 
 /// @brief Initialise an oscillator 
-void OscInit(Oscillator_t* osc, float_t volume)
+void OscInit(Oscillator_t* osc)
 {
-    osc->mVol = volume;
-    osc->mPhaseInc = 0.0f;
     osc->mPhase = 0.0f;
 }
 
 
 
-/// @brief Set oscillator frequency.
-void OscFreqSet(Oscillator_t* osc, float_t hertz)
-{
-    osc->mPhaseInc = SAMPLE_PERIOD * hertz;
-}
-
-
-
 /// @brief Increment phase of oscillator by 1 sample.
-void OscPhaseInc(Oscillator_t* osc)
+void OscPhaseInc(Oscillator_t* osc, float_t phaseInc)
 {
-    osc->mPhase += osc->mPhaseInc;
+    osc->mPhase += phaseInc;
 
 	if (osc->mPhase >= 1.0f)
     {
@@ -52,10 +42,9 @@ void OscPhaseInc(Oscillator_t* osc)
 
 
 /// @brief Get value of oscillator as saw tooth.
-float_t OscSawTooth(Oscillator_t* osc)
+float_t OscSawTooth(Oscillator_t* osc, float_t dt)
 {
     float_t phase = osc->mPhase;
-    float_t dt = osc->mPhaseInc;
 
     phase += 0.5;
     if (phase >= 1.0f) 
@@ -71,17 +60,115 @@ float_t OscSawTooth(Oscillator_t* osc)
 /// @brief Get value of oscillator as sine.
 float_t OscSine(Oscillator_t* osc)
 {
-    float_t value = osc->mPhase;
+    const float A = 73.69528f;
+    const float B = -41.11008f;
+    const float C = 6.28155;
+
+    float_t x = osc->mPhase;
+    float_t x2;
+    float_t x4;
     
-    if (osc->mPhase > 0.5f)
+    if (x < 0.25f)
     {
-        value -= 0.5f;
-        value *= (16.0f * value - 8.0f);
+        x2 = x * x;
+        x4 = x2 * x2;
+
+        x2 *= B;
+        x2 += C;
+
+        x4 *= A;
+        x4 += x2;
+
+        x *= x4;
+    }
+    else if (x < 0.5f)
+    {
+        x = 0.5f - x;
+        x2 = x * x;
+        x4 = x2 * x2;
+
+        x2 *= B;
+        x2 += C;
+
+        x4 *= A;
+        x4 += x2;
+
+        x *= x4;
+    }
+    else if (x < 0.75f)
+    {
+        x -= 0.5f;
+
+        x2 = x * x;
+        x4 = x2 * x2;
+
+        x2 *= B;
+        x2 += C;
+
+        x4 *= -A;
+        x4 -= x2;
+
+        x *= x4;
     }
     else
     {
-        value *= (8.0f - 16.0f * value);
+        x = 1.0f - x;
+
+        x2 = x * x;
+        x4 = x2 * x2;
+
+        x2 *= B;
+        x2 += C;
+
+        x4 *= -A;
+        x4 -= x2;
+
+        x *= x4;
     }
 
-    return value;
+    return x;
 }
+
+// @TODO Test if this is faster?
+// float_t OscSine(Oscillator_t* osc) 
+// {
+//     const float A = 73.69528f;
+//     const float B = -41.11008f;
+//     const float C = 6.28155f;
+
+//     float_t x = osc->mPhase;
+//     float_t adjusted_x;
+//     float_t a_sign;
+
+//     if (x < 0.5f) 
+//     {
+//         if (x < 0.25f)
+//         {
+//             adjusted_x = x;
+//             a_sign = A;
+//         } 
+//         else
+//         {
+//             adjusted_x = 0.5f - x;
+//             a_sign = A;
+//         }
+//     } 
+//     else
+//     {
+//         if (x < 0.75f)
+//         {
+//             adjusted_x = x - 0.5f;
+//             a_sign = -A;
+//         } 
+//         else
+//         {
+//             adjusted_x = 1.0f - x;
+//             a_sign = -A;
+//         }
+//     }
+
+//     float_t x2 = adjusted_x * adjusted_x;
+//     float_t x4 = x2 * x2;
+
+//     return adjusted_x * (a_sign * x4 + B * x2 + C);
+// }

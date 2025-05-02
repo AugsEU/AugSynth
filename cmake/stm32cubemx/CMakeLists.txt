@@ -29,6 +29,8 @@ set(MX_Application_Src
     ${CMAKE_SOURCE_DIR}/Core/Src/Oscillator.c
     ${CMAKE_SOURCE_DIR}/Core/Src/Midi.c
     ${CMAKE_SOURCE_DIR}/Core/Src/Tuning.c
+    ${CMAKE_SOURCE_DIR}/Core/Src/Envelope.c
+    ${CMAKE_SOURCE_DIR}/Core/Src/Voice.c
 )
 
 # STM32 HAL/LL Drivers

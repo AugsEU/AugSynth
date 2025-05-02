@@ -1,0 +1,106 @@
+#include <Voice.h>
+#include <Midi.h>
+#include <Params.h>
+#include <Tuning.h>
+
+extern float gParameters[128];
+
+/// @brief Initialise the voice at program start.
+void VoiceInit(Voice_t* pVoice)
+{
+    pVoice->mPlayingNoteIdx = 0;
+    pVoice->mFreq = 0.0f;
+
+    OscInit(&pVoice->mOsc1);
+    EnvInit(&pVoice->mEnv1);
+
+    OscInit(&pVoice->mOsc2);
+    EnvInit(&pVoice->mEnv2);
+}
+
+/// @brief Begin playing voice.
+void VoiceOn(Voice_t* pVoice, uint8_t playingNoteIdx)
+{
+    pVoice->mEnv1.mSection = ES_ATTACK;
+    pVoice->mEnv2.mSection = ES_ATTACK;
+
+    bool sameNote = playingNoteIdx == pVoice->mPlayingNoteIdx;
+    if (!sameNote)
+    {
+        pVoice->mEnv2.mVolume = 0.0f;
+        pVoice->mEnv1.mVolume = 0.0f;
+    }
+
+    pVoice->mPlayingNoteIdx = playingNoteIdx;
+}
+
+void VoiceOff(Voice_t* pVoice)
+{
+    pVoice->mEnv1.mSection = ES_RELEASE;
+    pVoice->mEnv2.mSection = ES_RELEASE;
+}
+
+void VoicePrepSampleBlock(Voice_t* pVoice)
+{
+    float_t atk1 = gParameters[ASP_ENV_ATTACK1];
+    float_t dec1 = gParameters[ASP_ENV_DECAY1];
+
+    float_t atk2 = gParameters[ASP_ENV_ATTACK2];
+    float_t dec2 = gParameters[ASP_ENV_DECAY2];
+
+    pVoice->mEnv1.mAttack = 1.0f / (SAMPLE_RATE * (8.01f - 8.0f * atk1));
+    pVoice->mEnv1.mSustain = gParameters[ASP_ENV_SUSTAIN1];
+    pVoice->mEnv1.mDecay = 1.0f / (SAMPLE_RATE * (8.01f - 8.0f * dec1));
+
+    pVoice->mEnv2.mAttack = 1.0f / (SAMPLE_RATE * (8.01f - 8.0f * atk2));
+    pVoice->mEnv2.mSustain = gParameters[ASP_ENV_SUSTAIN2];
+    pVoice->mEnv2.mDecay =  1.0f / (SAMPLE_RATE * (8.01f - 8.0f * dec2));
+
+    pVoice->mFreq = NoteToFreq12TET(pVoice->mPlayingNoteIdx);
+}
+
+float_t VoiceGetSample(Voice_t* pVoice, float_t waveShape1, float_t waveShape2, float_t tune1, float_t tune2)
+{
+    float_t dt =  pVoice->mFreq * SAMPLE_PERIOD;
+
+    OscPhaseInc(&pVoice->mOsc1, dt * tune1);
+    OscPhaseInc(&pVoice->mOsc2, dt * tune2);
+
+    EnvNextSample(&pVoice->mEnv1);
+    EnvNextSample(&pVoice->mEnv2);
+
+    float_t osc1st = OscSawTooth(&pVoice->mOsc1, dt);
+    float_t osc1si = OscSine(&pVoice->mOsc1);
+
+    osc1st *= waveShape1;
+    osc1si *= (1.0f - waveShape1);
+
+    osc1si += osc1st;
+    osc1si *= gParameters[ASP_DCO_VOL_1];
+    osc1si *= pVoice->mEnv1.mVolume;
+
+    float_t osc2st = OscSawTooth(&pVoice->mOsc2, dt);
+    float_t osc2si = OscSine(&pVoice->mOsc2);
+
+    osc2st *= waveShape2;
+    osc2si *= (1.0f - waveShape2);
+
+    osc2si += osc2st;
+    osc2si *= gParameters[ASP_DCO_VOL_2];
+    osc2si *= pVoice->mEnv2.mVolume;
+
+    return (osc2si + osc1si) * 0.5f;
+}
+
+int VoiceStealPriority(Voice_t* pVoice, uint8_t noteIdx)
+{
+    int priority = 2 - (int)pVoice->mEnv1.mSection;
+    priority += 2 - (int)pVoice->mEnv2.mSection;
+
+    if (pVoice->mPlayingNoteIdx == noteIdx)
+    {
+        priority += 5;
+    }
+
+    return priority;
+}
