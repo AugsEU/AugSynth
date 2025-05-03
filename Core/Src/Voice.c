@@ -56,12 +56,12 @@ void VoicePrepSampleBlock(Voice_t* pVoice)
     pVoice->mEnv2.mSustain = gParameters[ASP_ENV_SUSTAIN2];
     pVoice->mEnv2.mDecay =  1.0f / (SAMPLE_RATE * (8.01f - 8.0f * dec2));
 
-    pVoice->mFreq = NoteToFreq12TET(pVoice->mPlayingNoteIdx);
+    pVoice->mFreq = NoteToFreq12TET(pVoice->mPlayingNoteIdx) * SAMPLE_PERIOD;
 }
 
 float_t VoiceGetSample(Voice_t* pVoice, float_t waveShape1, float_t waveShape2, float_t tune1, float_t tune2)
 {
-    float_t dt =  pVoice->mFreq * SAMPLE_PERIOD;
+    float_t dt =  pVoice->mFreq;
 
     OscPhaseInc(&pVoice->mOsc1, dt * tune1);
     OscPhaseInc(&pVoice->mOsc2, dt * tune2);
