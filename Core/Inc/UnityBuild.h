@@ -1,6 +1,9 @@
 #ifndef __UNITY_BUILD_H
 #define __UNIT_BUILD_H
 
+#include "Constants.h"
+#include "Params.h"
+
 #include <Envelope.c>
 #include <Midi.c>
 #include <Oscillator.c>

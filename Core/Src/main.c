@@ -18,10 +18,9 @@
 /* ---------------------------------------------------------------------------*/
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "Constants.h"
-#include "WaveGen.h"
-#include "Midi.h"
 #include "UnityBuild.h"
+
+#define UNUSED_VAR(x) (void)x
 
 /* ----------------------------------------------------------------------------*/
 /* Globals --------------------------------------------------------------------*/
@@ -51,6 +50,8 @@ static void MX_USART2_UART_Init(void);
 //the BUFF_LEN_DIV4=500 but we are doing left and right samples (*2)= 1000 samples.
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef* hi2s)
 {
+	UNUSED_VAR(hi2s);
+
 	FillSoundBuffer(gAudioBuffer, AUDIO_BUFF_LEN_DIV4);
 }
 
@@ -61,6 +62,8 @@ void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef* hi2s)
 //doing that we want to fill in the 2nd half again starting at 1000 elements past &audiobuff
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef* hi2s)
 {
+	UNUSED_VAR(hi2s);
+	
 	FillSoundBuffer(gAudioBuffer + AUDIO_BUFF_LEN_DIV2, AUDIO_BUFF_LEN_DIV4);
 }
 
@@ -69,6 +72,8 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef* hi2s)
 // (the HAL_NVIC_SetPriority in HAL_UART_MspInit must be set to 0!)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
 {
+	UNUSED_VAR(huart);
+
 	ProcessMidiMessage(gRxBuff);
 
 	HAL_UART_Receive_IT(&huart2, gRxBuff, RX_BUFF_LEN);
