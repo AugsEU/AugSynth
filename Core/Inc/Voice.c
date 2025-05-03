@@ -63,12 +63,8 @@ float_t VoiceGetSample(Voice_t* pVoice, float_t waveShape1, float_t waveShape2, 
 {
     float_t dt =  pVoice->mFreq;
 
+    // Osc1
     OscPhaseInc(&pVoice->mOsc1, dt * tune1);
-    OscPhaseInc(&pVoice->mOsc2, dt * tune2);
-
-    EnvNextSample(&pVoice->mEnv1);
-    EnvNextSample(&pVoice->mEnv2);
-
     float_t osc1st = OscSawTooth(&pVoice->mOsc1, dt);
     float_t osc1si = OscSine(&pVoice->mOsc1);
 
@@ -77,8 +73,12 @@ float_t VoiceGetSample(Voice_t* pVoice, float_t waveShape1, float_t waveShape2, 
 
     osc1si += osc1st;
     osc1si *= gParameters[ASP_DCO_VOL_1];
+
+    EnvNextSample(&pVoice->mEnv1);
     osc1si *= pVoice->mEnv1.mVolume;
 
+    // Osc2
+    OscPhaseInc(&pVoice->mOsc2, dt * tune2);
     float_t osc2st = OscSawTooth(&pVoice->mOsc2, dt);
     float_t osc2si = OscSine(&pVoice->mOsc2);
 
@@ -87,9 +87,11 @@ float_t VoiceGetSample(Voice_t* pVoice, float_t waveShape1, float_t waveShape2, 
 
     osc2si += osc2st;
     osc2si *= gParameters[ASP_DCO_VOL_2];
+    
+    EnvNextSample(&pVoice->mEnv2);
     osc2si *= pVoice->mEnv2.mVolume;
 
-    return (osc2si + osc1si) * 0.5f;
+    return osc2si + osc1si;
 }
 
 int VoiceStealPriority(Voice_t* pVoice, uint8_t noteIdx)

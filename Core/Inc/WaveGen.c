@@ -73,7 +73,7 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	float_t tune1 = powf(2, floorf(4.0f * gParameters[ASP_DCO_TUNE_1] - 1.5f));
 	float_t tune2 = powf(2, floorf(4.0f * gParameters[ASP_DCO_TUNE_2] - 1.5f));
 
-	float_t gain = (4.0f / (float_t)MIDI_POLYPHONY) * gParameters[ASP_GAIN];
+	float_t gain = (2.0f / (float_t)MIDI_POLYPHONY) * gParameters[ASP_GAIN];
 	float_t drive = 1.0f + gParameters[ASP_DRIVE] * (DRIVE_ALPHA-1.0f);
 
 	float_t da = DRIVE_K * (drive - 1.0f);
