@@ -22,6 +22,9 @@ typedef struct
 
     Oscillator_t mOsc2;
     Envelope_t mEnv2;
+
+    float_t mLfoDelta;
+    float_t mLfoAmount;
 } Voice_t;
 
 void VoiceInit(Voice_t* pVoice);
@@ -30,7 +33,7 @@ void VoiceOn(Voice_t* pVoice, uint8_t playingNoteIdx);
 void VoiceOff(Voice_t* pVoice);
 
 void VoicePrepSampleBlock(Voice_t* pVoice);
-float_t VoiceGetSample(Voice_t* pVoice, float_t waveShape1, float_t waveShape2, float_t tune1, float_t tune2);
+float_t VoiceGetSample(Voice_t* pVoice, float_t waveShape1, float_t waveShape2, float_t tune1, float_t tune2, float_t lfoValue, float_t lfoGain);
 
 int VoiceStealPriority(Voice_t* pVoice, uint8_t noteIdx);
 

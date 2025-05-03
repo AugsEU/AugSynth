@@ -4,6 +4,7 @@
 #include "Constants.h"
 #include "Params.h"
 
+#include <AugMath.c>
 #include <Envelope.c>
 #include <Midi.c>
 #include <Oscillator.c>
