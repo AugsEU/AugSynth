@@ -14,7 +14,7 @@
 #define MIDI_NOTE_OFF 0x80
 #define MIDI_PARAM_NUM_MASK 0x7F
 
-#define MIDI_POLYPHONY 10
+#define MIDI_POLYPHONY 8
 
 
 
