@@ -33,11 +33,11 @@ void SynthInit(void)
 	gParameters[ASP_DRIVE]	 			= 0.0f;
 	gParameters[ASP_GAIN]	 			= 0.5f;
 	gParameters[ASP_DCO_WAVE_SHAPE_1]	= 0.0f;
-	gParameters[ASP_DCO_TUNE_1]	 		= 0.2f;
+	gParameters[ASP_DCO_TUNE_1]	 		= 0.5f;
 	gParameters[ASP_DCO_VOL_1]	 		= 1.0f;
 	gParameters[ASP_DCO_WAVE_SHAPE_2]	= 1.0f;
 	gParameters[ASP_DCO_TUNE_2]	 		= 0.5f;
-	gParameters[ASP_DCO_VOL_2]	 		= 1.0f;
+	gParameters[ASP_DCO_VOL_2]	 		= 0.0f;
 	gParameters[ASP_VCF_CUTOFF]	 		= 0.0f;
 	gParameters[ASP_VCF_RES]	 		= 0.0f;
 	gParameters[ASP_VCF_MODE]	 		= 0.0f;
