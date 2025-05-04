@@ -46,7 +46,7 @@ void SynthInit(void)
 
 	gParameters[ASP_TUNING]	 			= 0.0f;
 	gParameters[ASP_DRIVE]	 			= 0.0f;
-	gParameters[ASP_GAIN]	 			= 0.5f;
+	gParameters[ASP_GAIN]	 			= 0.1f;
 	gParameters[ASP_DCO_WAVE_SHAPE_1]	= 0.2f;
 	gParameters[ASP_DCO_TUNE_1]	 		= 0.2f;
 	gParameters[ASP_DCO_VOL_1]	 		= 1.0f;
@@ -80,21 +80,14 @@ void SynthInit(void)
 void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 {
 	uint16_t pos;
-	uint16_t* outp = buf+1;
+	uint16_t* outp = buf;
 	int32_t value;
 	int32_t delayValue;
 
 	// Delay
 	int32_t delayReadOffset = gParameters[ASP_DELAY_TIME] * DELAY_BUFFER_LEN;
-	if(gDelayReadOffset < delayReadOffset)
-	{
-		gDelayReadOffset += 2;
-	}
-	else if (gDelayReadOffset > delayReadOffset)
-	{
-		gDelayReadOffset -= 2;
-	}
 	int32_t delayFeedbackVol = (uint32_t)(gParameters[ASP_DELAY_FEEDBACK] * 32768.0f);
+	uint16_t delayGlide = (uint16_t)(gParameters[ASP_DELAY_SHEAR] * (float)AUDIO_BUFF_LEN_DIV4) + 2;
 	uint32_t delayReadHead;
 
 
@@ -126,7 +119,7 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	}
 
 	for (pos = 0; pos < samples; pos++)
-	{
+	{		
 		/*--- LFO ---*/
 		OscPhaseInc(&gLFO, lfoPhaseInc);
 		lfoValue = OscSine(&gLFO); //@TODO implement different wave shapes
@@ -156,6 +149,18 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 		value = (int32_t)((32767.0f) * y);
 
 		// Delay read
+		if ((pos % delayGlide) == 0)
+		{
+			if(gDelayReadOffset < delayReadOffset)
+			{
+				gDelayReadOffset += 1;
+			}
+			else if (gDelayReadOffset > delayReadOffset)
+			{
+				gDelayReadOffset -= 1;
+			}
+		}
+
 		if(gDelayReadOffset > 0)
 		{
 			delayReadHead = (gDelayWriteHead + DELAY_BUFFER_LEN - gDelayReadOffset) % DELAY_BUFFER_LEN;
@@ -172,8 +177,8 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 			value = 32767;
 		}
 
-		*outp = (int16_t)value;
-		outp += 2;
+		*outp++ = (int16_t)value;
+		*outp++ = (int16_t)value;
 
 		// Delay write
 		value *= delayFeedbackVol;

@@ -13,6 +13,7 @@ typedef struct
 void OscInit(Oscillator_t* osc);
 void OscPhaseInc(Oscillator_t* osc, float_t phaseInc);
 
+float_t OscSquare(Oscillator_t* osc, float_t phaseInc);
 float_t OscSawTooth(Oscillator_t* osc, float_t phaseInc);
 float_t OscSine(Oscillator_t* osc);
 

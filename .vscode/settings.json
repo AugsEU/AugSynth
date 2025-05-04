@@ -9,6 +9,9 @@
         "envelope.h": "c",
         "oscillator.h": "c",
         "midi.h": "c",
-        "params.h": "c"
+        "params.h": "c",
+        "type_traits": "c",
+        "xtr1common": "c",
+        "cmath": "c"
     }
 }

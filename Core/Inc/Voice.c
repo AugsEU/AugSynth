@@ -34,6 +34,7 @@ void VoiceOn(Voice_t* pVoice, uint8_t playingNoteIdx)
     pVoice->mLfoAmount = 0.0f;
 
     pVoice->mPlayingNoteIdx = playingNoteIdx;
+    pVoice->mFreq = NoteToFreq12TET(pVoice->mPlayingNoteIdx) * SAMPLE_PERIOD;
 }
 
 void VoiceOff(Voice_t* pVoice)
@@ -61,8 +62,6 @@ void VoicePrepSampleBlock(Voice_t* pVoice)
     pVoice->mEnv2.mDecay =  1.0f / (SAMPLE_RATE * (8.01f - 8.0f * dec2));
 
     pVoice->mLfoDelta = 1.0f / (SAMPLE_RATE * (20.01f - 20.0f * lfoAtk));
-
-    pVoice->mFreq = NoteToFreq12TET(pVoice->mPlayingNoteIdx) * SAMPLE_PERIOD;
 }
 
 float_t VoiceGetSample(Voice_t* pVoice, float_t waveShape1, float_t waveShape2, float_t tune1, float_t tune2, float_t lfoValue, float_t lfoGain)
@@ -79,7 +78,17 @@ float_t VoiceGetSample(Voice_t* pVoice, float_t waveShape1, float_t waveShape2, 
 
     // Osc1
     OscPhaseInc(&pVoice->mOsc1, dt * tune1 * osc1TuneLFO);
-    float_t osc1st = OscSawTooth(&pVoice->mOsc1, dt);
+    float_t osc1st;
+    if (waveShape1 < 0.5f)
+    {
+        osc1st = OscSquare(&pVoice->mOsc1, dt);
+        waveShape1 = 1.0f - 2.0f * waveShape1;
+    }
+    else
+    {
+        osc1st = OscSawTooth(&pVoice->mOsc1, dt);
+        waveShape1 = 2.0f * waveShape1 - 1.0f;
+    }
     float_t osc1si = OscSine(&pVoice->mOsc1);
 
     osc1st *= waveShape1;
@@ -93,7 +102,7 @@ float_t VoiceGetSample(Voice_t* pVoice, float_t waveShape1, float_t waveShape2, 
 
     // Osc2
     OscPhaseInc(&pVoice->mOsc2, dt * tune2 * osc2TuneLFO);
-    float_t osc2st = OscSawTooth(&pVoice->mOsc2, dt);
+    float_t osc2st = OscSquare(&pVoice->mOsc2, dt);
     float_t osc2si = OscSine(&pVoice->mOsc2);
 
     osc2st *= waveShape2;
