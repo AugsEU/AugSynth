@@ -6,6 +6,7 @@
 #include "Tuning.h"
 #include "Params.h"
 #include "Voice.h"
+#include "SVFilter.h"
 
 /* ---------------------------------------------------------------------------*/
 /* Constants ------------------------------------------------------------------*/
@@ -22,6 +23,7 @@ int32_t gDelayReadOffset = 0;
 
 Voice_t gVoiceBank[MIDI_POLYPHONY];
 Oscillator_t gLFO;
+SVFilter_t gFilter;
 
 extern float gParameters[128];
 
@@ -59,9 +61,9 @@ void SynthInit(void)
 	gParameters[ASP_VCF_CUTOFF_LFO]	 	= 0.0f;
 	gParameters[ASP_VCF_RES_LFO]	 	= 0.0f;
 	gParameters[ASP_VCF_ENV1]	 		= 0.0f;
-	gParameters[ASP_LFO_RATE]	 		= 0.0f;
+	gParameters[ASP_LFO_RATE]	 		= 0.5f;
 	gParameters[ASP_LFO_WAVE_SHAPE]	 	= 0.0f;
-	gParameters[ASP_LFO_ATTACK]	 		= 0.0f;
+	gParameters[ASP_LFO_ATTACK]	 		= 1.0f;
 	gParameters[ASP_LFO_GAIN]	 		= 0.0f;
 	gParameters[ASP_LFO_OSC1_TUNE]	 	= 0.0f;
 	gParameters[ASP_LFO_OSC2_TUNE]	 	= 0.0f;
@@ -71,6 +73,8 @@ void SynthInit(void)
 	gParameters[ASP_ENV_ATTACK2]	 	= 1.0f;
 	gParameters[ASP_ENV_SUSTAIN2]	 	= 1.0f;
 	gParameters[ASP_ENV_DECAY2] 		= 0.8f;
+
+	SvfInit(&gFilter);
 }
 
 
@@ -90,16 +94,43 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	uint16_t delayGlide = (uint16_t)(gParameters[ASP_DELAY_SHEAR] * (float)AUDIO_BUFF_LEN_DIV4) + 2;
 	uint32_t delayReadHead;
 
-
 	// DCO
 	float_t waveShape1 = gParameters[ASP_DCO_WAVE_SHAPE_1];
+	waveShape1 -= 0.5f;
+	waveShape1 *= waveShape1 * waveShape1;
+	waveShape1 *= 8.0f;
 	float_t waveShape2 = gParameters[ASP_DCO_WAVE_SHAPE_2];
+	waveShape2 -= 0.5f;
+	waveShape2 *= waveShape2 * waveShape2;
+	waveShape2 *= 8.0f;
 	float_t tune1 = powf(2, floorf(4.0f * gParameters[ASP_DCO_TUNE_1] - 1.5f));
 	float_t tune2 = powf(2, floorf(4.0f * gParameters[ASP_DCO_TUNE_2] - 1.5f));
+
+	// VCF
+	float_t filterMode = gParameters[ASP_VCF_MODE];
+	float_t filterFreqMod, filterFreq = gParameters[ASP_VCF_CUTOFF];
+	float_t filterResMod, filterRes = gParameters[ASP_VCF_RES];
+	float_t filterFreqLfo = gParameters[ASP_VCF_CUTOFF_LFO];
+	float_t filterResLfo = gParameters[ASP_VCF_RES_LFO];
+	float_t filterEnvFollow = gParameters[ASP_VCF_CUTOFF];
 
 	// LFO
 	float_t lfoValue;
 	float_t lfoWaveShape = gParameters[ASP_LFO_WAVE_SHAPE];
+	int32_t lfoWaveSelect;
+	if (lfoWaveShape < 0.33f)
+	{
+		lfoWaveSelect = 0;
+	}
+	else if (lfoWaveShape < 0.66f)
+	{
+		lfoWaveSelect = 1;
+	}
+	else
+	{
+		lfoWaveSelect = 2;
+	}
+
 	float_t lfoGain = gParameters[ASP_LFO_GAIN] * 0.5f;
 	float_t lfoPhaseInc = gParameters[ASP_LFO_RATE];
 	lfoPhaseInc *= lfoPhaseInc * lfoPhaseInc;
@@ -122,7 +153,19 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	{		
 		/*--- LFO ---*/
 		OscPhaseInc(&gLFO, lfoPhaseInc);
-		lfoValue = OscSine(&gLFO); //@TODO implement different wave shapes
+		switch (lfoWaveSelect)
+		{
+		case 0:
+			lfoValue = OscSine(&gLFO);
+			break;
+		case 1:
+			lfoValue = OscSawTooth(&gLFO, lfoPhaseInc);
+			break;
+		case 2:
+			lfoValue = OscSquare(&gLFO, lfoPhaseInc);
+			break;
+		}
+		
 
 		/*--- Generate waveform ---*/
 		float_t	y = 0.0f;
@@ -146,6 +189,7 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 			y *= (da * y * y + db * y + drive);
 		}
 
+		y = SvfProcess(&gFilter, y, filterFreq * (1.0f - filterFreqLfo * (lfoValue + 1.0f)), filterRes * (1.0f - filterResLfo * (lfoValue + 1.0f)), filterMode);
 		value = (int32_t)((32767.0f) * y);
 
 		// Delay read

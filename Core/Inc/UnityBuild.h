@@ -5,6 +5,7 @@
 #include "Params.h"
 
 #include <AugMath.c>
+#include <SVFilter.c>
 #include <Envelope.c>
 #include <Midi.c>
 #include <Oscillator.c>
