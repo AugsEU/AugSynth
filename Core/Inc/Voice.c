@@ -45,23 +45,15 @@ void VoiceOff(Voice_t* pVoice)
 
 void VoicePrepSampleBlock(Voice_t* pVoice)
 {
-    float_t atk1 = gParameters[ASP_ENV_ATTACK1];
-    float_t dec1 = gParameters[ASP_ENV_DECAY1];
-
-    float_t atk2 = gParameters[ASP_ENV_ATTACK2];
-    float_t dec2 = gParameters[ASP_ENV_DECAY2];
-
-    float_t lfoAtk = gParameters[ASP_LFO_ATTACK];
-
-    pVoice->mEnv1.mAttack = 1.0f / (SAMPLE_RATE * (8.01f - 8.0f * atk1));
+    pVoice->mEnv1.mAttack = gParameters[ASP_ENV_ATTACK1];
     pVoice->mEnv1.mSustain = gParameters[ASP_ENV_SUSTAIN1];
-    pVoice->mEnv1.mDecay = 1.0f / (SAMPLE_RATE * (8.01f - 8.0f * dec1));
+    pVoice->mEnv1.mDecay = gParameters[ASP_ENV_DECAY1];
 
-    pVoice->mEnv2.mAttack = 1.0f / (SAMPLE_RATE * (8.01f - 8.0f * atk2));
+    pVoice->mEnv2.mAttack = gParameters[ASP_ENV_ATTACK2];
     pVoice->mEnv2.mSustain = gParameters[ASP_ENV_SUSTAIN2];
-    pVoice->mEnv2.mDecay =  1.0f / (SAMPLE_RATE * (8.01f - 8.0f * dec2));
+    pVoice->mEnv2.mDecay =  gParameters[ASP_ENV_DECAY2];
 
-    pVoice->mLfoDelta = 1.0f / (SAMPLE_RATE * (20.01f - 20.0f * lfoAtk));
+    pVoice->mLfoDelta = gParameters[ASP_LFO_ATTACK];
 }
 
 float_t VoiceGetSample(Voice_t* pVoice, float_t waveShape1, float_t waveShape2, float_t tune1, float_t tune2, float_t lfoValue, float_t lfoGain)
@@ -72,7 +64,7 @@ float_t VoiceGetSample(Voice_t* pVoice, float_t waveShape1, float_t waveShape2, 
     }
     lfoValue *= pVoice->mLfoAmount;
 
-    float_t osc1TuneLFO = FastUnitExp(gParameters[ASP_LFO_OSC1_TUNE] * lfoValue);
+    float_t osc1TuneLFO = FastUnitExp(gParameters[ASP_LFO_OSC1_TUNE] * lfoValue); //@TODO precompute for all oscillators
     float_t osc2TuneLFO = FastUnitExp(gParameters[ASP_LFO_OSC2_TUNE] * lfoValue);
     float_t dt =  pVoice->mFreq;
 

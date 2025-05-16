@@ -60,11 +60,11 @@ void SynthInit(void)
 	gParameters[ASP_VCF_MODE]	 		= 0.0f;
 	gParameters[ASP_VCF_CUTOFF_LFO]	 	= 0.0f;
 	gParameters[ASP_VCF_RES_LFO]	 	= 0.0f;
-	gParameters[ASP_VCF_ENV1]	 		= 0.0f;
+	gParameters[ASP_VCF_FOLLOW]	 		= 0.0f;
 	gParameters[ASP_LFO_RATE]	 		= 0.5f;
 	gParameters[ASP_LFO_WAVE_SHAPE]	 	= 0.0f;
 	gParameters[ASP_LFO_ATTACK]	 		= 1.0f;
-	gParameters[ASP_LFO_GAIN]	 		= 0.0f;
+	gParameters[ASP_LFO_WOBBLE]	 		= 0.0f;
 	gParameters[ASP_LFO_OSC1_TUNE]	 	= 0.0f;
 	gParameters[ASP_LFO_OSC2_TUNE]	 	= 0.0f;
 	gParameters[ASP_ENV_ATTACK1]	 	= 1.0f;
@@ -103,8 +103,8 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	waveShape2 -= 0.5f;
 	waveShape2 *= waveShape2 * waveShape2;
 	waveShape2 *= 8.0f;
-	float_t tune1 = powf(2, floorf(4.0f * gParameters[ASP_DCO_TUNE_1] - 1.5f));
-	float_t tune2 = powf(2, floorf(4.0f * gParameters[ASP_DCO_TUNE_2] - 1.5f));
+	float_t tune1 = gParameters[ASP_DCO_TUNE_1];
+	float_t tune2 = gParameters[ASP_DCO_TUNE_2];
 
 	// VCF
 	float_t filterMode = gParameters[ASP_VCF_MODE];
@@ -131,16 +131,12 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 		lfoWaveSelect = 2;
 	}
 
-	float_t lfoGain = gParameters[ASP_LFO_GAIN] * 0.5f;
+	float_t lfoGain = 0.0f;//gParameters[ASP_] * 0.5f;
 	float_t lfoPhaseInc = gParameters[ASP_LFO_RATE];
-	lfoPhaseInc *= lfoPhaseInc * lfoPhaseInc;
-	lfoPhaseInc *= 35.0f;
-	lfoPhaseInc += 0.1f;
-	lfoPhaseInc *= SAMPLE_PERIOD;
 
 	// Drive & Gain
-	float_t gain = (2.0f / (float_t)MIDI_POLYPHONY) * gParameters[ASP_GAIN];
-	float_t drive = 1.0f + gParameters[ASP_DRIVE] * (DRIVE_ALPHA-1.0f);
+	float_t gain = gParameters[ASP_GAIN];
+	float_t drive = gParameters[ASP_DRIVE];
 	float_t da = DRIVE_K * (drive - 1.0f);
 	float_t db = (1.0f - drive - da);
 
@@ -189,7 +185,7 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 			y *= (da * y * y + db * y + drive);
 		}
 
-		y = SvfProcess(&gFilter, y, filterFreq * (1.0f - filterFreqLfo * (lfoValue + 1.0f)), filterRes * (1.0f - filterResLfo * (lfoValue + 1.0f)), filterMode);
+		//y = SvfProcess(&gFilter, y, filterFreq * (1.0f - filterFreqLfo * (lfoValue + 1.0f)), filterRes * (1.0f - filterResLfo * (lfoValue + 1.0f)), filterMode);
 		value = (int32_t)((32767.0f) * y);
 
 		// Delay read
