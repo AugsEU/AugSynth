@@ -31,6 +31,8 @@ void ProcessMidiMessage(uint8_t* buff)
 {
     uint8_t header = buff[0];
     float paramValue;
+    uint32_t buff32;
+    uint32_t* param32;
 
     switch (header)
     {
@@ -40,6 +42,11 @@ void ProcessMidiMessage(uint8_t* buff)
     case MIDI_NOTE_OFF:
         NoteOff(buff[1]);
         break;
+    // case MIDI_INT_PARAM:
+    //     buff32 = buff[1];
+    //     param32 = (uint32_t*)(&gParameters[header & MIDI_PARAM_NUM_MASK]);
+    //     *param32 = buff32;
+    //     break;
     default: // Param change
         paramValue = *(float*)(buff+1);
         gParameters[header & MIDI_PARAM_NUM_MASK] = paramValue;

@@ -95,14 +95,8 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	uint32_t delayReadHead;
 
 	// DCO
-	float_t waveShape1 = gParameters[ASP_DCO_WAVE_SHAPE_1];
-	waveShape1 -= 0.5f;
-	waveShape1 *= waveShape1 * waveShape1;
-	waveShape1 *= 8.0f;
-	float_t waveShape2 = gParameters[ASP_DCO_WAVE_SHAPE_2];
-	waveShape2 -= 0.5f;
-	waveShape2 *= waveShape2 * waveShape2;
-	waveShape2 *= 8.0f;
+	uint32_t waveShape1 = EXTRACT_INT_PARAM(gParameters,ASP_DCO_WAVE_SHAPE_1);
+	uint32_t waveShape2 = EXTRACT_INT_PARAM(gParameters,ASP_DCO_WAVE_SHAPE_2);
 	float_t tune1 = gParameters[ASP_DCO_TUNE_1];
 	float_t tune2 = gParameters[ASP_DCO_TUNE_2];
 
@@ -116,20 +110,7 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 
 	// LFO
 	float_t lfoValue;
-	float_t lfoWaveShape = gParameters[ASP_LFO_WAVE_SHAPE];
-	int32_t lfoWaveSelect;
-	if (lfoWaveShape < 0.33f)
-	{
-		lfoWaveSelect = 0;
-	}
-	else if (lfoWaveShape < 0.66f)
-	{
-		lfoWaveSelect = 1;
-	}
-	else
-	{
-		lfoWaveSelect = 2;
-	}
+	uint32_t lfoWaveSelect = EXTRACT_INT_PARAM(gParameters, ASP_LFO_WAVE_SHAPE);
 
 	float_t lfoGain = 0.0f;//gParameters[ASP_] * 0.5f;
 	float_t lfoPhaseInc = gParameters[ASP_LFO_RATE];
@@ -151,17 +132,17 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 		OscPhaseInc(&gLFO, lfoPhaseInc);
 		switch (lfoWaveSelect)
 		{
-		case 0:
+		default:
+		case OSC_MODE_SINE:
 			lfoValue = OscSine(&gLFO);
 			break;
-		case 1:
-			lfoValue = OscSawTooth(&gLFO, lfoPhaseInc);
-			break;
-		case 2:
+		case OSC_MODE_SQUARE:
 			lfoValue = OscSquare(&gLFO, lfoPhaseInc);
 			break;
+		case OSC_MODE_SAW:
+			lfoValue = OscSawTooth(&gLFO, lfoPhaseInc);
+			break;
 		}
-		
 
 		/*--- Generate waveform ---*/
 		float_t	y = 0.0f;

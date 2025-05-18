@@ -19,4 +19,6 @@
     #define __ALIGN    __attribute__ ((aligned (4)))
 #endif /* __GNUC__ */
 
+#define EXTRACT_INT_PARAM(buff, idx) *((uint32_t*)buff + idx)
+
 #endif /* INC_CONSTANTS_H_ */

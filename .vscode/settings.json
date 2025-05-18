@@ -12,6 +12,7 @@
         "params.h": "c",
         "type_traits": "c",
         "xtr1common": "c",
-        "cmath": "c"
+        "cmath": "c",
+        "cstdint": "c"
     }
 }

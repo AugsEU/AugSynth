@@ -56,7 +56,7 @@ void VoicePrepSampleBlock(Voice_t* pVoice)
     pVoice->mLfoDelta = gParameters[ASP_LFO_ATTACK];
 }
 
-float_t VoiceGetSample(Voice_t* pVoice, float_t waveShape1, float_t waveShape2, float_t tune1, float_t tune2, float_t lfoValue, float_t lfoGain)
+float_t VoiceGetSample(Voice_t* pVoice, uint32_t waveShape1, uint32_t waveShape2, float_t tune1, float_t tune2, float_t lfoValue, float_t lfoGain)
 {
     if(pVoice->mLfoAmount < 1.0f)
     {
@@ -70,42 +70,49 @@ float_t VoiceGetSample(Voice_t* pVoice, float_t waveShape1, float_t waveShape2, 
 
     // Osc1
     OscPhaseInc(&pVoice->mOsc1, dt * tune1 * osc1TuneLFO);
-    float_t osc1st;
-    if (waveShape1 < 0.0f)
+    float_t osc1;
+    switch (waveShape1)
     {
-        osc1st = OscSquare(&pVoice->mOsc1, dt);
-        waveShape1 = -waveShape1;
+    default:
+    case OSC_MODE_SINE:
+        osc1 = OscSine(&pVoice->mOsc1);
+        break;
+    case OSC_MODE_SQUARE:
+        osc1 = OscSquare(&pVoice->mOsc1, dt);
+        break;
+    case OSC_MODE_SAW:
+        osc1 = OscSawTooth(&pVoice->mOsc1, dt);
+        break;
     }
-    else
-    {
-        osc1st = OscSawTooth(&pVoice->mOsc1, dt);
-    }
-    float_t osc1si = OscSine(&pVoice->mOsc1);
-
-    osc1st *= waveShape1;
-    osc1si *= (1.0f - waveShape1);
-
-    osc1si += osc1st;
-    osc1si *= gParameters[ASP_DCO_VOL_1];
+    osc1 *= gParameters[ASP_DCO_VOL_1];
 
     EnvNextSample(&pVoice->mEnv1);
-    osc1si *= pVoice->mEnv1.mVolume;
+    osc1TuneLFO = pVoice->mEnv1.mVolume;// reuse var
+    osc1 *= osc1TuneLFO * osc1TuneLFO;
 
     // Osc2
     OscPhaseInc(&pVoice->mOsc2, dt * tune2 * osc2TuneLFO);
-    float_t osc2st = OscSquare(&pVoice->mOsc2, dt);
-    float_t osc2si = OscSine(&pVoice->mOsc2);
+    float_t osc2;
+    switch (waveShape2)
+    {
+    default:
+    case OSC_MODE_SINE:
+        osc2 = OscSine(&pVoice->mOsc2);
+        break;
+    case OSC_MODE_SQUARE:
+        osc2 = OscSquare(&pVoice->mOsc2, dt);
+        break;
+    case OSC_MODE_SAW:
+        osc2 = OscSawTooth(&pVoice->mOsc2, dt);
+        break;
+    }
+    osc2 *= gParameters[ASP_DCO_VOL_2];
 
-    osc2st *= waveShape2;
-    osc2si *= (1.0f - waveShape2);
-
-    osc2si += osc2st;
-    osc2si *= gParameters[ASP_DCO_VOL_2];
-    
     EnvNextSample(&pVoice->mEnv2);
-    osc2si *= pVoice->mEnv2.mVolume;
+    osc2TuneLFO = pVoice->mEnv2.mVolume;// reuse var
+    osc2 *= osc2TuneLFO * osc2TuneLFO;
 
-    return (osc2si + osc1si) * (1.0f - lfoGain * (lfoValue + 1.0f));
+    return (osc1 + osc2) * (1.0f - lfoGain * (lfoValue + 1.0f));
 }
 
 int VoiceStealPriority(Voice_t* pVoice, uint8_t noteIdx)
