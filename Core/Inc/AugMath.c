@@ -2,6 +2,16 @@
 #define AUG_MATH_H
 
 #include <math.h>
+#include <stdint.h>
+
+uint32_t gSeed;
+
+uint32_t GetNextRand()
+{
+    gSeed *= 1664525;
+    gSeed += 1013904223;
+    return gSeed;
+}
 
 float_t FastUnitExp(float_t x)
 {

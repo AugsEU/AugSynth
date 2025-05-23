@@ -11,6 +11,7 @@
 /* ---------------------------------------------------------------------------*/
 /* Constants ------------------------------------------------------------------*/
 #define DELAY_BUFFER_LEN 48000
+#define DELAY_GLITCH_SIZE 2000
 
 const float_t DRIVE_K = 1.0f;
 const float_t DRIVE_ALPHA = 4.0f * DRIVE_K + 1.0f;
@@ -20,6 +21,7 @@ const float_t DRIVE_ALPHA = 4.0f * DRIVE_K + 1.0f;
 uint16_t gDelayBuffer[DELAY_BUFFER_LEN];
 uint32_t gDelayWriteHead;
 int32_t gDelayReadOffset = 0;
+int32_t gDelayReadOffsetOffset = 0;
 
 Voice_t gVoiceBank[MIDI_POLYPHONY];
 Oscillator_t gLFO;
@@ -65,15 +67,48 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 {
 	uint16_t pos;
 	uint16_t* outp = buf;
-	int32_t value;
+	int32_t value, noDelayValue, prevValue, timeSinceRisingEdge;
 	int32_t delayValue;
+	uint32_t rndValue = GetNextRand();
 
 	UpdateTuning();
+	timeSinceRisingEdge = 0;
 
 	// Delay
-	int32_t delayReadOffset = gParameters[ASP_DELAY_TIME] * DELAY_BUFFER_LEN;
+	uint32_t delayMode = EXTRACT_INT_PARAM(gParameters, ASP_DELAY_MODE);
+	
+	if(delayMode == DELAY_MODE_GLITCH)
+	{
+		if(rndValue % 13 == 0)
+		{
+			if(rndValue % 3 == 0 && gDelayReadOffsetOffset < DELAY_GLITCH_SIZE)
+			{
+				gDelayReadOffsetOffset += DELAY_GLITCH_SIZE / 3;
+			}
+			else if (rndValue % 3 == 1 && gDelayReadOffsetOffset > -DELAY_GLITCH_SIZE)
+			{
+				gDelayReadOffsetOffset -= DELAY_GLITCH_SIZE / 3;
+			}
+		}
+	}
+	else
+	{
+		gDelayReadOffsetOffset = 0;
+	}
+	int32_t delayReadOffset = gParameters[ASP_DELAY_TIME] * DELAY_BUFFER_LEN + gDelayReadOffsetOffset;
+	if(delayReadOffset < 0) 
+	{
+		delayReadOffset = 0;
+		gDelayReadOffsetOffset = 0;
+	}
+	else if(delayReadOffset >= DELAY_BUFFER_LEN)
+	{
+		delayReadOffset =  DELAY_BUFFER_LEN - 1;
+		gDelayReadOffsetOffset = 0;
+	}
 	int32_t delayFeedbackVol = (uint32_t)(gParameters[ASP_DELAY_FEEDBACK] * 32768.0f);
 	uint16_t delayGlide = (uint16_t)(gParameters[ASP_DELAY_SHEAR] * (float)AUDIO_BUFF_LEN_DIV4) + 2;
+
 	uint32_t delayReadHead;
 
 	// DCO
@@ -154,7 +189,17 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 		y *= gain;
 
 		//y = SvfProcess(&gFilter, y, filterFreq * (1.0f - filterFreqLfo * (lfoValue + 1.0f)), filterRes * (1.0f - filterResLfo * (lfoValue + 1.0f)), filterMode);
+		prevValue = value;
 		value = (int32_t)((32767.0f) * y);
+
+		if(prevValue < 0 && value > 0)
+		{
+			timeSinceRisingEdge = 0;
+		}
+		else
+		{
+			timeSinceRisingEdge++;
+		}
 
 		// Delay read
 		if ((pos % delayGlide) == 0)
@@ -169,6 +214,7 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 			}
 		}
 
+		noDelayValue = value;
 		if(gDelayReadOffset > 0)
 		{
 			delayReadHead = (gDelayWriteHead + DELAY_BUFFER_LEN - gDelayReadOffset) % DELAY_BUFFER_LEN;
@@ -189,6 +235,11 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 		*outp++ = (int16_t)value;
 
 		// Delay write
+		if (delayMode == DELAY_MODE_SLAPBACK)
+		{
+			value = noDelayValue; // Just write delay without feedback
+		}
+
 		value *= delayFeedbackVol;
 		value /= 32768;
 

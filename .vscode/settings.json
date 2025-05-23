@@ -13,6 +13,7 @@
         "type_traits": "c",
         "xtr1common": "c",
         "cmath": "c",
-        "cstdint": "c"
+        "cstdint": "c",
+        "limits": "c"
     }
 }
