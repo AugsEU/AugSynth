@@ -48,12 +48,14 @@ void VoiceOff(Voice_t* pVoice)
 void VoicePrepSampleBlock(Voice_t* pVoice)
 {
     pVoice->mEnv1.mAttack = gParameters[ASP_ENV_ATTACK1];
-    pVoice->mEnv1.mSustain = gParameters[ASP_ENV_SUSTAIN1];
     pVoice->mEnv1.mDecay = gParameters[ASP_ENV_DECAY1];
-
+    pVoice->mEnv1.mSustain = gParameters[ASP_ENV_SUSTAIN1];
+    pVoice->mEnv1.mRelease = gParameters[ASP_ENV_RELEASE1];
+    
     pVoice->mEnv2.mAttack = gParameters[ASP_ENV_ATTACK2];
-    pVoice->mEnv2.mSustain = gParameters[ASP_ENV_SUSTAIN2];
     pVoice->mEnv2.mDecay =  gParameters[ASP_ENV_DECAY2];
+    pVoice->mEnv2.mSustain = gParameters[ASP_ENV_SUSTAIN2];
+    pVoice->mEnv2.mRelease = gParameters[ASP_ENV_RELEASE2];
 
     pVoice->mLfoDelta = gParameters[ASP_LFO_ATTACK];
 }

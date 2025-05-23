@@ -24,8 +24,10 @@ typedef struct
 {
     EnvelopeSection_t mSection;
     float_t mAttack;
-    float_t mSustain;
     float_t mDecay;
+    float_t mSustain;
+    float_t mRelease;
+
     float_t mVolume;
 } Envelope_t;
 

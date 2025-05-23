@@ -3,9 +3,10 @@
 void EnvInit(Envelope_t* pEnv)
 {
     pEnv->mSection = ES_OFF; 
-    pEnv->mAttack = 0.1f;
-    pEnv->mSustain = 0.1f;
-    pEnv->mDecay = 0.1f;
+    pEnv->mAttack = 0.01f;
+    pEnv->mSustain = 0.95f;
+    pEnv->mDecay = 0.01f;
+    pEnv->mRelease = 0.01f;
     pEnv->mVolume = 0.0f;
 }
 
@@ -36,11 +37,15 @@ void EnvNextSample(Envelope_t* pEnv)
     case ES_SUSTAIN:
         break; // Something else has to set this release.
     case ES_RELEASE:
-        pEnv->mVolume -= pEnv->mDecay;
-        if(pEnv->mVolume <= 0.0f)
+        pEnv->mVolume -= pEnv->mRelease;
+        if(signbit(pEnv->mVolume))
         {
             pEnv->mVolume = 0.0f;
             pEnv->mSection = ES_OFF;
+        }
+        else if(pEnv->mVolume > pEnv->mSustain)
+        {
+            pEnv->mVolume -= 0.001f; // Quickly drop down to sustain level
         }
         break;
     }
