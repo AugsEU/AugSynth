@@ -5,14 +5,36 @@
 
 float_t FastUnitExp(float_t x)
 {
-    const float_t A = 0.532061f;
-    const float_t B = 1.10892f;
-    const float_t C = 1.0f;
+    float_t g = 0.75 * x;
+    g += 0.25f;
+    x *= g;
+    return x + 1.0f;
+}
 
-    float_t x2 = A * x;
-    x2 += B;
-    x *= x2;
-    return x + C;
+float_t ComputeLfoMult(float_t lfoValue, float_t lfoAmount)
+{
+    if(signbit(lfoAmount)) // If negative
+    {
+        lfoValue += 1.0f;
+    }
+    else
+    {
+        lfoValue -= 1.0f;
+    }
+
+    return 1.0f + lfoAmount * lfoValue;
+}
+
+float_t ShapeWave(float_t waveValue, float_t waveShape)
+{
+    float_t g = waveValue * waveValue;
+    g *= g;
+    // g *= g;
+
+    g *= waveShape;
+    g += (1.0f - waveShape);
+
+    return waveValue * g;
 }
 
 #endif // AUG_MATH_H

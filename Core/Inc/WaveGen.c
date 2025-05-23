@@ -23,6 +23,7 @@ int32_t gDelayReadOffset = 0;
 
 Voice_t gVoiceBank[MIDI_POLYPHONY];
 Oscillator_t gLFO;
+Oscillator_t gLFOWobbler;
 SVFilter_t gFilter;
 
 extern float gParameters[128];
@@ -45,32 +46,12 @@ void SynthInit(void)
 	}
 
 	OscInit(&gLFO);
+	OscInit(&gLFOWobbler);
 
-	gParameters[ASP_TUNING]	 			= 0.0f;
-	gParameters[ASP_DRIVE]	 			= 0.0f;
-	gParameters[ASP_GAIN]	 			= 0.1f;
-	gParameters[ASP_DCO_WAVE_TYPE_1]	= 0.0f;
-	gParameters[ASP_DCO_TUNE_1]	 		= 0.2f;
-	gParameters[ASP_DCO_VOL_1]	 		= 1.0f;
-	gParameters[ASP_DCO_WAVE_TYPE_2]	= 0.0f;
-	gParameters[ASP_DCO_TUNE_2]	 		= 0.5f;
-	gParameters[ASP_DCO_VOL_2]	 		= 0.8f;
-	gParameters[ASP_VCF_CUTOFF]	 		= 0.0f;
-	gParameters[ASP_VCF_RES]	 		= 0.0f;
-	gParameters[ASP_VCF_MODE]	 		= 0.0f;
-	gParameters[ASP_VCF_FOLLOW]	 		= 0.0f;
-	gParameters[ASP_LFO_RATE]	 		= 0.5f;
-	gParameters[ASP_LFO_WAVE_TYPE]	 	= 0.0f;
-	gParameters[ASP_LFO_ATTACK]	 		= 1.0f;
-	gParameters[ASP_LFO_WOBBLE]	 		= 0.0f;
-	gParameters[ASP_LFO_OSC1_TUNE]	 	= 0.0f;
-	gParameters[ASP_LFO_OSC2_TUNE]	 	= 0.0f;
-	gParameters[ASP_ENV_ATTACK1]	 	= 1.0f;
-	gParameters[ASP_ENV_SUSTAIN1]	 	= 1.0f;
-	gParameters[ASP_ENV_DECAY1]	 		= 0.8f;
-	gParameters[ASP_ENV_ATTACK2]	 	= 1.0f;
-	gParameters[ASP_ENV_SUSTAIN2]	 	= 1.0f;
-	gParameters[ASP_ENV_DECAY2] 		= 0.8f;
+	for(int i = 0; i < ASP_NUM_PARAMS; i++)
+	{
+		gParameters[i] = 0.0f;
+	}
 
 	SvfInit(&gFilter);
 }
@@ -93,10 +74,12 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	uint32_t delayReadHead;
 
 	// DCO
-	uint32_t waveShape1 = EXTRACT_INT_PARAM(gParameters,ASP_DCO_WAVE_TYPE_1);
-	uint32_t waveShape2 = EXTRACT_INT_PARAM(gParameters,ASP_DCO_WAVE_TYPE_2);
+	uint32_t waveType1 = EXTRACT_INT_PARAM(gParameters,ASP_DCO_WAVE_TYPE_1);
+	uint32_t waveType2 = EXTRACT_INT_PARAM(gParameters,ASP_DCO_WAVE_TYPE_2);
 	float_t tune1 = gParameters[ASP_DCO_TUNE_1];
 	float_t tune2 = gParameters[ASP_DCO_TUNE_2];
+	float_t shape1 = 1.5f * gParameters[ASP_DCO_WS_1] - 0.25f;
+	float_t shape2 = 1.5f * gParameters[ASP_DCO_WS_2] - 0.25f;
 
 	// VCF
 	// float_t filterMode = gParameters[ASP_VCF_MODE];
@@ -109,9 +92,9 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	// LFO
 	float_t lfoValue;
 	uint32_t lfoWaveSelect = EXTRACT_INT_PARAM(gParameters, ASP_LFO_WAVE_TYPE);
-
-	float_t lfoGain = 0.0f;//gParameters[ASP_] * 0.5f;
 	float_t lfoPhaseInc = gParameters[ASP_LFO_RATE];
+	float_t lfoWobblePhaseInc = lfoPhaseInc;
+	float_t lfoWobble = gParameters[ASP_LFO_WOBBLE];
 
 	// Drive & Gain
 	float_t gain = gParameters[ASP_GAIN];
@@ -135,7 +118,7 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 			lfoValue = OscSine(&gLFO);
 			break;
 		case OSC_MODE_SQUARE:
-			lfoValue = OscSquare(&gLFO, lfoPhaseInc);
+			lfoValue = OscSquareLF(&gLFO);
 			break;
 		case OSC_MODE_SAW:
 			lfoValue = OscSawTooth(&gLFO, lfoPhaseInc);
@@ -147,7 +130,7 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 
 		for(int i = 0; i < MIDI_POLYPHONY; i++)
 		{
-			y += VoiceGetSample(&gVoiceBank[i], waveShape1, waveShape2, tune1, tune2, lfoValue, lfoGain);
+			y += VoiceGetSample(&gVoiceBank[i], waveType1, waveType2, tune1, tune2, shape1, shape2, lfoValue, 0.0f);
 		}
 
 		/*--- Drive & Gain ---*/

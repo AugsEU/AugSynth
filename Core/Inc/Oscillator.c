@@ -1,6 +1,7 @@
 #include "Oscillator.h"
 #include "Constants.h"
 
+#define ACCURATE_SINE 0
 
 float PolyBlep(float t, float dt)
 {
@@ -57,65 +58,112 @@ float_t OscSawTooth(Oscillator_t* osc, float_t dt)
 }
 
 
-/// @brief Get value of oscillator as a squarewave
-float_t OscSquare(Oscillator_t* osc, float_t dt)
+/// @brief Get value of oscillator as a organ type wave
+float_t OscOrgan(Oscillator_t* osc, float_t shape)
 {
+    const float_t DT = 0.1f;
+    shape += 0.45f;
+    shape *= 0.52f;
     float_t phase = osc->mPhase;
 
-    float_t value = phase < 0.5f ? 1.0f : -1.0f;
-    if(phase < dt || phase > 1.0f - dt)
+    float_t value = phase < shape ? 1.0f : -1.0f;
+    if(phase < DT)
     {
-        value += PolyBlep(phase, dt);
+        value = phase * (1.0f / DT);
+        phase = 2.0f - value;
+        value *= phase;
+    }
+    else if(phase < shape - DT)
+    {
+        value = 1.0f;
+    }
+    else if (phase < shape)
+    {
+        value = phase - shape;
+        value *= (1.0f / DT);
+        value += 2.0f;
+        phase = 2.0f - value;
+        value *= phase;
+    }
+    else if(phase < shape + DT)
+    {
+        value = phase - shape;
+        value *= (1.0f / DT);
+        phase = value - 2.0f;
+        value *= phase;
+    }
+    else if (phase < 1.0f - DT)
+    {
+        value = -1.0f;
     }
     else
     {
-        phase += 0.5f;
-        if (phase > 1.0f)
-        {
-            phase -= 1.0f;
-        }
-        value -= PolyBlep(phase, dt);
+        value = phase-1;
+        value *= (1.0f / DT);
+        value += 2.0f;
+        phase = value - 2.0f;
+        value *= phase;
     }
 
     return value;
 }
 
-// float_t OscSquare(Oscillator_t* osc, float_t dt)
-// {
-//     float_t phase = osc->mPhase;
-//     float_t polyBlep = 0.0f;
+/// @brief Square 
+float_t OscSquareBLEP(Oscillator_t* osc, float_t dt, float_t shape)
+{
+    shape += 0.3f;
+    shape *= 0.6f;
+    float_t phase = osc->mPhase;
 
-//     if (phase <= 0.5f)
-//     {
-//         if (phase < dt)
-//         {
-//             polyBlep = phase / dt;
-//             polyBlep = 2.0f * polyBlep - polyBlep * polyBlep - 1.0f;
-//         }
-//         else if (phase >= 0.5f - dt)
-//         {
-//             polyBlep = (0.5f - phase) / dt;
-//             polyBlep = 2.0f * polyBlep - polyBlep * polyBlep - 1.0f;
-//         }
+    float_t value = phase < shape ? 1.0f : -1.0f;
+    if(phase < dt)
+    {
+        value = phase / dt;
+        phase = 2.0f - value;
+        value *= phase;
+    }
+    else if(phase < shape - dt)
+    {
+        value = 1.0f;
+    }
+    else if (phase < shape)
+    {
+        value = phase - shape;
+        value /= dt;
+        value += 2.0f;
+        phase = 2.0f - value;
+        value *= phase;
+    }
+    else if(phase < shape + dt)
+    {
+        value = phase - shape;
+        value /= dt;
+        phase = value - 2.0f;
+        value *= phase;
+    }
+    else if (phase < 1.0f - dt)
+    {
+        value = -1.0f;
+    }
+    else
+    {
+        value = phase-1;
+        value /= dt;
+        value += 2.0f;
+        phase = value - 2.0f;
+        value *= phase;
+    }
 
-//         return 1.0f + polyBlep;
-//     }
+    return value;
+}
 
-//     if (phase <= 0.5f + dt)
-//     {
-//         polyBlep = (phase-0.5f) / dt;
-//         polyBlep =  polyBlep * polyBlep + 2.0f * polyBlep - 1.0f;
-//     }
-//     else if (phase > 1.0f - dt)
-//     {
-//         polyBlep = (1.0f - phase) / dt;
-//         polyBlep =  polyBlep * polyBlep + 2.0f * polyBlep - 1.0f;
-//     }
+/// @brief Compute wave for low frequency oscillator
+float_t OscSquareLF(Oscillator_t* osc)
+{
+    return osc->mPhase < 0.5f ? 1.0f : -1.0f;
+}
 
-//     return -1.0f + polyBlep;
-// }
-
-
+#if ACCURATE_SINE
 /// @brief Get value of oscillator as sine.
 float_t OscSine(Oscillator_t* osc)
 {
@@ -187,3 +235,29 @@ float_t OscSine(Oscillator_t* osc)
 
     return x;
 }
+#else
+/// @brief Get value of oscillator as sine.
+float_t OscSine(Oscillator_t* osc)
+{
+    float_t x = osc->mPhase;
+    float_t x2;
+    
+    if (x < 0.5f)
+    {
+        x2 = x * x;
+        x2 *= 2.0f;
+        x -= x2;
+        x *= 8.0f;
+        return x;
+    }
+    else 
+    {
+        x -= 0.5f;
+        x2 = x * x;
+        x2 *= 2.0f;
+        x -= x2;
+        x *= -8.0f;
+        return x;
+    }
+}
+#endif // ACCURATE_SINE
