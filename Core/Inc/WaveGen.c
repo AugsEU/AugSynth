@@ -54,6 +54,7 @@ void SynthInit(void)
 	}
 
 	SvfInit(&gFilter);
+	TuningInit();
 }
 
 
@@ -66,6 +67,8 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	uint16_t* outp = buf;
 	int32_t value;
 	int32_t delayValue;
+
+	UpdateTuning();
 
 	// Delay
 	int32_t delayReadOffset = gParameters[ASP_DELAY_TIME] * DELAY_BUFFER_LEN;
@@ -93,7 +96,7 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	float_t lfoValue;
 	uint32_t lfoWaveSelect = EXTRACT_INT_PARAM(gParameters, ASP_LFO_WAVE_TYPE);
 	float_t lfoPhaseInc = gParameters[ASP_LFO_RATE];
-	float_t lfoWobblePhaseInc = lfoPhaseInc;
+	float_t lfoWobblePhaseInc = lfoPhaseInc * 0.061804697157f;
 	float_t lfoWobble = gParameters[ASP_LFO_WOBBLE];
 
 	// Drive & Gain
@@ -110,7 +113,8 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	for (pos = 0; pos < samples; pos++)
 	{		
 		/*--- LFO ---*/
-		OscPhaseInc(&gLFO, lfoPhaseInc);
+		OscPhaseInc(&gLFO, lfoPhaseInc * ComputeLfoMult(OscSine(&gLFOWobbler), lfoWobble));
+		OscPhaseInc(&gLFOWobbler, lfoWobblePhaseInc);
 		switch (lfoWaveSelect)
 		{
 		default:
@@ -134,7 +138,7 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 		}
 
 		/*--- Drive & Gain ---*/
-		y *= gain;
+		y *= (1.0f / MIDI_POLYPHONY);
 
 		if (y < 0.0f)
 		{
@@ -146,6 +150,8 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 		{
 			y *= (da * y * y + db * y + drive);
 		}
+
+		y *= gain;
 
 		//y = SvfProcess(&gFilter, y, filterFreq * (1.0f - filterFreqLfo * (lfoValue + 1.0f)), filterRes * (1.0f - filterResLfo * (lfoValue + 1.0f)), filterMode);
 		value = (int32_t)((32767.0f) * y);

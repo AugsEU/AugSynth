@@ -36,7 +36,7 @@ void VoiceOn(Voice_t* pVoice, uint8_t playingNoteIdx)
     pVoice->mLfoAmount = 0.0f;
 
     pVoice->mPlayingNoteIdx = playingNoteIdx;
-    pVoice->mFreq = NoteToFreq12TET(pVoice->mPlayingNoteIdx) * SAMPLE_PERIOD;
+    pVoice->mFreq = NoteToFreq(pVoice->mPlayingNoteIdx) * SAMPLE_PERIOD;
 }
 
 void VoiceOff(Voice_t* pVoice)
@@ -100,6 +100,7 @@ float_t VoiceGetSample(Voice_t* pVoice,
     EnvNextSample(&pVoice->mEnv1);
     osc1TuneLFO = pVoice->mEnv1.mVolume;// reuse var
     osc1 *= osc1TuneLFO * osc1TuneLFO;
+    osc1 *= ComputeLfoMult(lfoValue, gParameters[ASP_LFO_OSC1_VOLUME]);
 
 #if !MONO_OSC
     // Osc2
@@ -128,8 +129,9 @@ float_t VoiceGetSample(Voice_t* pVoice,
     EnvNextSample(&pVoice->mEnv2);
     osc2TuneLFO = pVoice->mEnv2.mVolume;// reuse var
     osc2 *= osc2TuneLFO * osc2TuneLFO;
+    osc2 *= ComputeLfoMult(lfoValue, gParameters[ASP_LFO_OSC2_VOLUME]);
 
-    return (osc1 + osc2) * (1.0f - lfoGain * (lfoValue + 1.0f));
+    return osc1 + osc2;
 #else
     return osc1;
 #endif
