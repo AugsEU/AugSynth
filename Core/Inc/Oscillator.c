@@ -160,7 +160,49 @@ float_t OscSquareBLEP(Oscillator_t* osc, float_t dt, float_t shape)
 /// @brief Compute wave for low frequency oscillator
 float_t OscSquareLF(Oscillator_t* osc)
 {
-    return osc->mPhase < 0.5f ? 1.0f : -1.0f;
+    const float_t DT = 0.01f;
+    float_t phase = osc->mPhase;
+
+    float_t value = phase < 0.5f ? 1.0f : -1.0f;
+    if(phase < DT)
+    {
+        value = phase * (1.0f / DT);
+        phase = 2.0f - value;
+        value *= phase;
+    }
+    else if(phase < 0.5f - DT)
+    {
+        value = 1.0f;
+    }
+    else if (phase < 0.5f)
+    {
+        value = phase - 0.5f;
+        value *= (1.0f / DT);
+        value += 2.0f;
+        phase = 2.0f - value;
+        value *= phase;
+    }
+    else if(phase < 0.5f + DT)
+    {
+        value = phase - 0.5f;
+        value *= (1.0f / DT);
+        phase = value - 2.0f;
+        value *= phase;
+    }
+    else if (phase < 1.0f - DT)
+    {
+        value = -1.0f;
+    }
+    else
+    {
+        value = phase-1;
+        value *= (1.0f / DT);
+        value += 2.0f;
+        phase = value - 2.0f;
+        value *= phase;
+    }
+
+    return value;
 }
 
 #if ACCURATE_SINE

@@ -6,7 +6,7 @@
 #include "Tuning.h"
 #include "Params.h"
 #include "Voice.h"
-#include "SVFilter.h"
+#include "NLFilter.h"
 
 /* ---------------------------------------------------------------------------*/
 /* Constants ------------------------------------------------------------------*/
@@ -26,7 +26,6 @@ int32_t gDelayReadOffsetOffset = 0;
 Voice_t gVoiceBank[MIDI_POLYPHONY];
 Oscillator_t gLFO;
 Oscillator_t gLFOWobbler;
-SVFilter_t gFilter;
 
 extern float gParameters[128];
 
@@ -55,7 +54,7 @@ void SynthInit(void)
 		gParameters[i] = 0.0f;
 	}
 
-	SvfInit(&gFilter);
+	InitFilter();
 	TuningInit();
 }
 
@@ -67,12 +66,11 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 {
 	uint16_t pos;
 	uint16_t* outp = buf;
-	int32_t value, noDelayValue, prevValue, timeSinceRisingEdge;
+	int32_t value, noDelayValue;
 	int32_t delayValue;
 	uint32_t rndValue = GetNextRand();
 
 	UpdateTuning();
-	timeSinceRisingEdge = 0;
 
 	// Delay
 	uint32_t delayMode = EXTRACT_INT_PARAM(gParameters, ASP_DELAY_MODE);
@@ -120,12 +118,11 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	float_t shape2 = 1.5f * gParameters[ASP_DCO_WS_2] - 0.25f;
 
 	// VCF
-	// float_t filterMode = gParameters[ASP_VCF_MODE];
-	// float_t filterFreqMod, filterFreq = gParameters[ASP_VCF_CUTOFF];
-	// float_t filterResMod, filterRes = gParameters[ASP_VCF_RES];
-	// float_t filterFreqLfo = gParameters[ASP_VCF_CUTOFF_LFO];
-	// float_t filterResLfo = gParameters[ASP_VCF_RES_LFO];
-	// float_t filterEnvFollow = gParameters[ASP_VCF_CUTOFF];
+	SetFilterType(EXTRACT_INT_PARAM(gParameters, ASP_VCF_MODE));
+	float_t filterFreq = gParameters[ASP_VCF_CUTOFF];
+	float_t filterRes = gParameters[ASP_VCF_RES];
+	float_t filterFreqLfo = gParameters[ASP_LFO_VCF_CUTOFF];
+	float_t filterResLfo = gParameters[ASP_LFO_VCF_RES];
 
 	// LFO
 	float_t lfoValue;
@@ -188,18 +185,13 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 
 		y *= gain;
 
-		//y = SvfProcess(&gFilter, y, filterFreq * (1.0f - filterFreqLfo * (lfoValue + 1.0f)), filterRes * (1.0f - filterResLfo * (lfoValue + 1.0f)), filterMode);
-		prevValue = value;
+		/*--- Filter ---*/
+		SetFilterFreq(filterFreq * ComputeLfoMult(lfoValue, filterFreqLfo));
+		SetFilterRes(filterRes * ComputeLfoMult(lfoValue, filterResLfo));
+		y = CalcFilterSample(y);
+		
+		/*--- Delay ---*/
 		value = (int32_t)((32767.0f) * y);
-
-		if(prevValue < 0 && value > 0)
-		{
-			timeSinceRisingEdge = 0;
-		}
-		else
-		{
-			timeSinceRisingEdge++;
-		}
 
 		// Delay read
 		if ((pos % delayGlide) == 0)
@@ -222,6 +214,7 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 			value += delayValue;
 		}
 
+		/*--- Write to buffer ---*/
 		if (value <= -32768)
 		{
 			value = -32768;
@@ -234,7 +227,7 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 		*outp++ = (int16_t)value;
 		*outp++ = (int16_t)value;
 
-		// Delay write
+		/*--- Delay write ---*/
 		if (delayMode == DELAY_MODE_SLAPBACK)
 		{
 			value = noDelayValue; // Just write delay without feedback
