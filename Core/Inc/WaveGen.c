@@ -114,8 +114,10 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	uint32_t waveType2 = EXTRACT_INT_PARAM(gParameters,ASP_DCO_WAVE_TYPE_2);
 	float_t tune1 = gParameters[ASP_DCO_TUNE_1];
 	float_t tune2 = gParameters[ASP_DCO_TUNE_2];
-	float_t shape1 = 1.5f * gParameters[ASP_DCO_WS_1] - 0.25f;
-	float_t shape2 = 1.5f * gParameters[ASP_DCO_WS_2] - 0.25f;
+	float_t shape1;// = 1.5f * gParameters[ASP_DCO_WS_1] - 0.25f;
+	float_t shape2;// = 1.5f * gParameters[ASP_DCO_WS_2] - 0.25f;
+	float_t shape1Lfo = gParameters[ASP_LFO_OSC1_SHAPE];
+	float_t shape2Lfo = gParameters[ASP_LFO_OSC2_SHAPE];
 
 	// VCF
 	SetFilterType(EXTRACT_INT_PARAM(gParameters, ASP_VCF_MODE));
@@ -163,10 +165,12 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 
 		/*--- Generate waveform ---*/
 		float_t	y = 0.0f;
+		shape1 = 1.5f * gParameters[ASP_DCO_WS_1] * ComputeLfoMult(lfoValue, shape1Lfo) - 0.25f;
+		shape2 = 1.5f * gParameters[ASP_DCO_WS_2] * ComputeLfoMult(lfoValue, shape2Lfo) - 0.25f;
 
 		for(int i = 0; i < MIDI_POLYPHONY; i++)
 		{
-			y += VoiceGetSample(&gVoiceBank[i], waveType1, waveType2, tune1, tune2, shape1, shape2, lfoValue, 0.0f);
+			y += VoiceGetSample(&gVoiceBank[i], waveType1, waveType2, tune1, tune2, shape1, shape2, lfoValue);
 		}
 
 		/*--- Drive & Gain ---*/

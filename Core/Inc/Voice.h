@@ -37,7 +37,7 @@ float_t VoiceGetSample(Voice_t* pVoice,
     uint32_t waveShape1, uint32_t waveShape2, 
     float_t tune1, float_t tune2, 
     float_t shape1, float_t shape2,
-    float_t lfoValue, float_t lfoGain);
+    float_t lfoValue);
 
 int VoiceStealPriority(Voice_t* pVoice, uint8_t noteIdx);
 

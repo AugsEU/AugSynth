@@ -64,7 +64,7 @@ float_t VoiceGetSample(Voice_t* pVoice,
                         uint32_t waveType1, uint32_t waveType2, 
                         float_t tune1, float_t tune2, 
                         float_t shape1, float_t shape2,
-                        float_t lfoValue, float_t lfoGain)
+                        float_t lfoValue)
 {
     if(pVoice->mLfoAmount < 1.0f)
     {

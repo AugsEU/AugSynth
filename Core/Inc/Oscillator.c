@@ -111,8 +111,8 @@ float_t OscOrgan(Oscillator_t* osc, float_t shape)
 /// @brief Square 
 float_t OscSquareBLEP(Oscillator_t* osc, float_t dt, float_t shape)
 {
-    shape += 0.3f;
-    shape *= 0.6f;
+    shape += 0.255f;
+    shape *= 0.6125f;
     float_t phase = osc->mPhase;
 
     float_t value = phase < shape ? 1.0f : -1.0f;
