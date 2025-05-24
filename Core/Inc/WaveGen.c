@@ -12,6 +12,7 @@
 /* Constants ------------------------------------------------------------------*/
 #define DELAY_BUFFER_LEN 48000
 #define DELAY_GLITCH_SIZE 2000
+#define LOUDNESS_ALPHA (0.001f)
 
 const float_t DRIVE_K = 1.0f;
 const float_t DRIVE_ALPHA = 4.0f * DRIVE_K + 1.0f;
@@ -26,6 +27,7 @@ int32_t gDelayReadOffsetOffset = 0;
 Voice_t gVoiceBank[MIDI_POLYPHONY];
 Oscillator_t gLFO;
 Oscillator_t gLFOWobbler;
+float_t gCurrLoudness = 0.0f;
 
 extern float gParameters[128];
 
@@ -121,10 +123,11 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 
 	// VCF
 	SetFilterType(EXTRACT_INT_PARAM(gParameters, ASP_VCF_MODE));
-	float_t filterFreq = gParameters[ASP_VCF_CUTOFF];
+	float_t filterFreqMod, filterFreq = gParameters[ASP_VCF_CUTOFF];
 	float_t filterRes = gParameters[ASP_VCF_RES];
 	float_t filterFreqLfo = gParameters[ASP_LFO_VCF_CUTOFF];
 	float_t filterResLfo = gParameters[ASP_LFO_VCF_RES];
+	float_t filterFollow = gParameters[ASP_VCF_FOLLOW];
 
 	// LFO
 	float_t lfoValue;
@@ -187,10 +190,19 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 			y *= (da * y * y + db * y + drive);
 		}
 
+		float_t sampLoud = fabsf(y) * 2.0f;
+		if(sampLoud > 1.0f) sampLoud = 1.0f;
+		sampLoud -= 1.0f;
+		sampLoud *= sampLoud;
+		sampLoud *= sampLoud;
+		sampLoud = (1.0f - sampLoud);
+		gCurrLoudness = LOUDNESS_ALPHA * sampLoud + (1.0f - LOUDNESS_ALPHA) * gCurrLoudness;
 		y *= gain;
 
 		/*--- Filter ---*/
-		SetFilterFreq(filterFreq * ComputeLfoMult(lfoValue, filterFreqLfo));
+		filterFreqMod = ComputeLfoMult(lfoValue, filterFreqLfo);
+		filterFreqMod *=  ComputeLoudnessMult(gCurrLoudness, filterFollow);
+		SetFilterFreq(filterFreq * filterFreqMod);
 		SetFilterRes(filterRes * ComputeLfoMult(lfoValue, filterResLfo));
 		y = CalcFilterSample(y);
 		
@@ -219,11 +231,11 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 		}
 
 		/*--- Write to buffer ---*/
-		if (value <= -32768)
+		if (value < -32768)
 		{
 			value = -32768;
 		}
-		else if (value >= 32767)
+		else if (value > 32767)
 		{
 			value = 32767;
 		}

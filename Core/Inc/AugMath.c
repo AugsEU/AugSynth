@@ -35,6 +35,16 @@ float_t ComputeLfoMult(float_t lfoValue, float_t lfoAmount)
     return 1.0f + lfoAmount * lfoValue;
 }
 
+float_t ComputeLoudnessMult(float_t loudness, float_t amount)
+{
+    if(!(signbit(amount))) // If positive
+    {
+        loudness -= 1.0f;
+    }
+
+    return 1.0f + loudness * amount;
+}
+
 float_t ShapeWave(float_t waveValue, float_t waveShape)
 {
     float_t g = waveValue * waveValue;
