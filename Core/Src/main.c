@@ -30,8 +30,6 @@ UART_HandleTypeDef huart2;
 
 uint16_t gAudioBuffer[AUDIO_BUFF_LEN];
 uint8_t gRxBuff[RX_BUFF_LEN];
-uint8_t gMidiBuff[RX_BUFF_LEN];
-uint8_t gMidiBuffIdx = 0;
 
 /* ----------------------------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
@@ -74,7 +72,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart)
 {
 	UNUSED_VAR(huart);
 
-	ProcessMidiMessage(gRxBuff);
+	if(gRxBuff[0] == RX_BUFF_HEADER)
+	{
+		ProcessMidiMessage(gRxBuff+1);
+	}
+	else
+	{
+		NVIC_SystemReset();
+	}
 
 	HAL_UART_Receive_IT(&huart2, gRxBuff, RX_BUFF_LEN);
 }

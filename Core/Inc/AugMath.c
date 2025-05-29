@@ -37,11 +37,7 @@ float_t ComputeLfoMult(float_t lfoValue, float_t lfoAmount)
 
 float_t ComputeLoudnessMult(float_t loudness, float_t amount)
 {
-    if(!(signbit(amount))) // If positive
-    {
-        loudness -= 1.0f;
-    }
-
+    loudness -= 1.0f;
     return 1.0f + loudness * amount;
 }
 
@@ -55,6 +51,40 @@ float_t ShapeWave(float_t waveValue, float_t waveShape)
     g += (1.0f - waveShape);
 
     return waveValue * g;
+}
+
+#define DRIVE_K (1.0f)
+#define DRIVE_M (4.0f*DRIVE_K + 1.0f)
+
+#define DRIVE_A (DRIVE_K*DRIVE_M - DRIVE_K)
+#define DRIVE_B ((DRIVE_K+1.0f)*(1.0f-DRIVE_M))
+#define DRIVE_C (DRIVE_M)
+
+float_t DrivenSample(float_t sample)
+{
+    float_t p;
+    if(signbit(sample))
+    {
+        sample = -sample;
+        if(sample > 1.0f)
+        {
+            return -1.0f;
+        }
+        p = DRIVE_B + DRIVE_A*sample;
+        p *= p;
+        p += DRIVE_C;
+        return -p*sample;
+    }
+
+    if(sample > 1.0f)
+    {
+        return 1.0f;
+    }
+
+    p = DRIVE_B + DRIVE_A*sample;
+    p *= p;
+    p += DRIVE_C;
+    return p*sample;
 }
 
 #endif // AUG_MATH_H

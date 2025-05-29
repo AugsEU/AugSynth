@@ -55,9 +55,9 @@
 #define ASP_NUM_PARAMS          39
 
 // Delay modes
-#define DELAY_MODE_NORMAL       0
-#define DELAY_MODE_SLAPBACK     1
-#define DELAY_MODE_OCTAVE       2
+#define DELAY_MODE_OFF          0
+#define DELAY_MODE_NORMAL       1
+#define DELAY_MODE_SLAPBACK     2
 #define DELAY_MODE_GLITCH       3
 #define NUM_DELAY_MODES         4
 
@@ -66,16 +66,14 @@
 #define OSC_MODE_SQUARE         1
 #define OSC_MODE_SAW            2
 #define OSC_MODE_ORGAN          3 
-#define OSC_MODE_NOISE          4 
-#define NUM_OSC_MODES           5
+#define NUM_OSC_MODES           4
 #define NUM_LFO_OSC_MODES       3
 
 // Filter modes
 #define FILTER_MODE_OFF         0
 #define FILTER_MODE_LP          1
-#define FILTER_MODE_BP          2
-#define FILTER_MODE_HP          3
-#define NUM_FILTER_MODES        4
+#define FILTER_MODE_HP          2
+#define NUM_FILTER_MODES        3
 
 // Tuning modes
 #define TUNING_12TET            0

@@ -14,9 +14,6 @@
 #define DELAY_GLITCH_SIZE 2000
 #define LOUDNESS_ALPHA (0.001f)
 
-const float_t DRIVE_K = 1.0f;
-const float_t DRIVE_ALPHA = 4.0f * DRIVE_K + 1.0f;
-
 /* ----------------------------------------------------------------------------*/
 /* Globals --------------------------------------------------------------------*/
 uint16_t gDelayBuffer[DELAY_BUFFER_LEN];
@@ -95,16 +92,25 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	{
 		gDelayReadOffsetOffset = 0;
 	}
+
 	int32_t delayReadOffset = gParameters[ASP_DELAY_TIME] * DELAY_BUFFER_LEN + gDelayReadOffsetOffset;
-	if(delayReadOffset < 0) 
+	if(delayMode == DELAY_MODE_OFF)
 	{
+		gDelayReadOffset = 0;
 		delayReadOffset = 0;
-		gDelayReadOffsetOffset = 0;
 	}
-	else if(delayReadOffset >= DELAY_BUFFER_LEN)
+	else
 	{
-		delayReadOffset =  DELAY_BUFFER_LEN - 1;
-		gDelayReadOffsetOffset = 0;
+		if(delayReadOffset < 0) 
+		{
+			delayReadOffset = 0;
+			gDelayReadOffsetOffset = 0;
+		}
+		else if(delayReadOffset >= DELAY_BUFFER_LEN)
+		{
+			delayReadOffset =  DELAY_BUFFER_LEN - 1;
+			gDelayReadOffsetOffset = 0;
+		}
 	}
 	int32_t delayFeedbackVol = (uint32_t)(gParameters[ASP_DELAY_FEEDBACK] * 32768.0f);
 	uint16_t delayGlide = (uint16_t)(gParameters[ASP_DELAY_SHEAR] * (float)AUDIO_BUFF_LEN_DIV4) + 2;
@@ -139,8 +145,7 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	// Drive & Gain
 	float_t gain = gParameters[ASP_GAIN];
 	float_t drive = gParameters[ASP_DRIVE];
-	float_t da = DRIVE_K * (drive - 1.0f);
-	float_t db = (1.0f - drive - da);
+	float_t drive_norm = 1.0f /((MIDI_POLYPHONY - 1.0f) * (1.0f - drive) + 1.0f);
 
 	for(int i = 0; i < MIDI_POLYPHONY; i++)
 	{
@@ -176,20 +181,7 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 			y += VoiceGetSample(&gVoiceBank[i], waveType1, waveType2, tune1, tune2, shape1, shape2, lfoValue);
 		}
 
-		/*--- Drive & Gain ---*/
-		y *= (1.0f / MIDI_POLYPHONY);
-
-		if (y < 0.0f)
-		{
-			y *= -1.0f;
-			y *= (da * y * y + db * y + drive); // Guaranteed to still be -1 to 1
-			y *= -1.0f;
-		}
-		else
-		{
-			y *= (da * y * y + db * y + drive);
-		}
-
+		/*--- Measure loudness ---*/
 		float_t sampLoud = fabsf(y) * 2.0f;
 		if(sampLoud > 1.0f) sampLoud = 1.0f;
 		sampLoud -= 1.0f;
@@ -197,7 +189,6 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 		sampLoud *= sampLoud;
 		sampLoud = (1.0f - sampLoud);
 		gCurrLoudness = LOUDNESS_ALPHA * sampLoud + (1.0f - LOUDNESS_ALPHA) * gCurrLoudness;
-		y *= gain;
 
 		/*--- Filter ---*/
 		filterFreqMod = ComputeLfoMult(lfoValue, filterFreqLfo);
@@ -205,6 +196,11 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 		SetFilterFreq(filterFreq * filterFreqMod);
 		SetFilterRes(filterRes * ComputeLfoMult(lfoValue, filterResLfo));
 		y = CalcFilterSample(y);
+
+		/*--- Drive & Gain ---*/
+		y = drive * DrivenSample(y) + (1.0f - drive) * y;
+		y *= drive_norm;
+		y *= gain;
 		
 		/*--- Delay ---*/
 		value = (int32_t)((32767.0f) * y);

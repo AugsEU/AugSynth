@@ -5,6 +5,7 @@
 #define FAST_FILTER_CLIP 1
 
 float_t FilterClip(float_t n);
+float_t LowpassClip(float_t n);
 NLFilter_t gNLFilter;
 
 void InitFilter()
@@ -12,8 +13,9 @@ void InitFilter()
 	gNLFilter.mType = FILTER_MODE_OFF;
 	gNLFilter.mSample0 = 0;
 	gNLFilter.mSample1 = 0;
-	gNLFilter.mFreq = 0.2f;
 	gNLFilter.mQ = 0.9f;
+
+	SetFilterFreq(0.0f);
 }
 
 void SetFilterRes(float_t val)
@@ -78,9 +80,7 @@ float_t CalcFilterSample(float_t smpl)
 
 	if(gNLFilter.mType == FILTER_MODE_LP) // Low pass
 	{
-		if(y1 < -1.95f) out= -1.0f;
-		else if(y1 > 1.95f) out= 1.0f;
-		else out=  4.15f*y1/(4.29f+y1*y1);
+		return LowpassClip(y1);
 	}
 	else // High pass
 	{
@@ -111,6 +111,22 @@ float_t FilterClip(float_t n)
     
     return n - a;
 }
+
+float_t LowpassClip(float_t n)
+{
+	if(n < -2.0f) return -1.0f;
+	else if(n > 2.0f) return 1.0f;
+
+	float_t a = n*n;
+	a *= 0.25f;
+	
+	if(signbit(n))
+    {
+        return n + a;
+    }
+    
+    return n - a;
+}
 #else
 float_t FilterClip(float_t n)
 {
@@ -118,6 +134,14 @@ float_t FilterClip(float_t n)
 	float_t b = a*a;
 	a = ((b + 105)*b + 945) / ((15*b + 420)*b + 945);
 	return n * a;
+}
+
+float_t LowpassClip(float_t n)
+{
+	if(n < -1.95f) return -1.0f;
+	else if(n > 1.95f) return 1.0f;
+	
+	return 4.15f*n/(4.29f+n*n);
 }
 #endif
 //------------------------------------------------------------------------------------

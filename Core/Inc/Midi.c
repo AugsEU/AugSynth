@@ -31,8 +31,6 @@ void ProcessMidiMessage(uint8_t* buff)
 {
     uint8_t header = buff[0];
     float paramValue;
-    uint32_t buff32;
-    uint32_t* param32;
 
     switch (header)
     {

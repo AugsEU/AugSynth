@@ -537,5 +537,10 @@ float_t NoteToFreq(uint8_t note)
         octave--;
     }
 
-    return freq;
+    if(freq > SAMPLE_RATE)
+    {
+        return SAMPLE_RATE * 0.5f;
+    }
+
+    return freq * 0.5f;
 }

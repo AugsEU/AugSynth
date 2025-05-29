@@ -11,7 +11,8 @@
 #define AUDIO_BUFF_LEN_DIV2     (2*AUDIO_BUFF_LEN_DIV4)
 #define AUDIO_BUFF_LEN          (4*AUDIO_BUFF_LEN_DIV4)
 
-#define RX_BUFF_LEN             5
+#define RX_BUFF_LEN             6
+#define RX_BUFF_HEADER          0xFF
 
 #define MIDI_MAX				127.0f
 
