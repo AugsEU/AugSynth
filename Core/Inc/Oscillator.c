@@ -205,6 +205,11 @@ float_t OscSquareLF(Oscillator_t* osc)
     return value;
 }
 
+float_t OscSquareFast(Oscillator_t* osc)
+{
+    return osc->mPhase < 0.5f ? 1.0f : -1.0f;
+}
+
 #if ACCURATE_SINE
 /// @brief Get value of oscillator as sine.
 float_t OscSine(Oscillator_t* osc)

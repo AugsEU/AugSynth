@@ -39,6 +39,23 @@ void VoiceOn(Voice_t* pVoice, uint8_t playingNoteIdx)
     pVoice->mFreq = NoteToFreq(pVoice->mPlayingNoteIdx) * SAMPLE_PERIOD;
 }
 
+/// @brief Begin playing voice when stolen from another.
+void VoiceOnSteal(Voice_t* pVoice, uint8_t playingNoteIdx)
+{
+    if(pVoice->mEnv1.mSection == ES_RELEASE || pVoice->mEnv1.mSection == ES_OFF)
+    {
+        pVoice->mEnv1.mSection = ES_ATTACK;
+    }
+    
+    if(pVoice->mEnv2.mSection == ES_RELEASE || pVoice->mEnv2.mSection == ES_OFF)
+    {
+        pVoice->mEnv2.mSection = ES_ATTACK;
+    }
+
+    pVoice->mPlayingNoteIdx = playingNoteIdx;
+    pVoice->mFreq = NoteToFreq(pVoice->mPlayingNoteIdx) * SAMPLE_PERIOD;
+}
+
 void VoiceOff(Voice_t* pVoice)
 {
     pVoice->mEnv1.mSection = ES_RELEASE;

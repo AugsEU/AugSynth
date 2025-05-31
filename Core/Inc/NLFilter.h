@@ -5,7 +5,7 @@
 #ifndef NL_FILTER_H
 #define NL_FILTER_H
 
-#define FLTR_GAIN 					   0.88f
+#define FLTR_GAIN 					   	0.87f
 #define MAX_FREQ						2200.f
 #define MIN_FREQ						20.f
 

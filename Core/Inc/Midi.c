@@ -2,11 +2,17 @@
 #include "Constants.h"
 #include "Voice.h"
 #include "Tuning.h"
+#include <string.h>
 
 /* ----------------------------------------------------------------------------*/
 /* Global variables -----------------------------------------------------------*/
+#define NOTE_STACK_SIZE 64
 extern Voice_t gVoiceBank[MIDI_POLYPHONY];
+extern bool gClickEnabled;
+extern uint8_t gPendingVoiceSteal;
 float gParameters[128];
+uint8_t gNoteStack[NOTE_STACK_SIZE];
+uint8_t gNoteStackIdx = 0;
 
 void NoteOn(uint8_t noteIdx, uint8_t velocity);
 void NoteOff(uint8_t noteIdx);
@@ -17,11 +23,7 @@ void NoteOff(uint8_t noteIdx);
 /// @brief Initialise midi
 void MidiInit(void)
 {
-    // for (int i = 0; i < MIDI_POLYPHONY; i++)
-    // {
-    //     gPlayingNotes[i].mNoteIdx = 0xFF;
-    //     gPlayingNotes[i].mNoteVelocity = 0;
-    // }
+
 }
 
 
@@ -39,6 +41,12 @@ void ProcessMidiMessage(uint8_t* buff)
         break;
     case MIDI_NOTE_OFF:
         NoteOff(buff[1]);
+        break;
+    case MIDI_CLICK_ON:
+        gClickEnabled = true;
+        break;
+    case MIDI_CLICK_OFF:
+        gClickEnabled = false;
         break;
     // case MIDI_INT_PARAM:
     //     buff32 = buff[1];
@@ -67,34 +75,75 @@ void NoteOn(uint8_t noteIdx, uint8_t velocity)
 {
     if (velocity == 0) return;
 
-    int bestVoiceIdx = 0;
-    int bestVoicePrio = 0;
-    for (int i = 0; i < MIDI_POLYPHONY; i++)
+    uint32_t soundType = EXTRACT_INT_PARAM(gParameters, ASP_SOUND_TYPE);
+    if(soundType == SOUND_TYPE_MONO || soundType == SOUND_TYPE_BASS) // Mono sound type
     {
-        Voice_t* pVoice = &gVoiceBank[i];
-        int currPrio = VoiceStealPriority(pVoice, noteIdx);
-
-        if (currPrio > bestVoicePrio)
+        gNoteStack[gNoteStackIdx] = noteIdx;
+        VoiceOn(&gVoiceBank[0], noteIdx);
+        if(gNoteStackIdx < NOTE_STACK_SIZE - 1)
         {
-            bestVoiceIdx = i;
-            bestVoicePrio = currPrio;
+            gNoteStackIdx++;
         }
     }
-
-    if (bestVoicePrio > 0)
+    else // Poly sound type
     {
-        VoiceOn(&gVoiceBank[bestVoiceIdx], noteIdx);
+        int bestVoiceIdx = 0;
+        int bestVoicePrio = 0;
+        for (int i = 0; i < MIDI_POLYPHONY; i++)
+        {
+            Voice_t* pVoice = &gVoiceBank[i];
+            int currPrio = VoiceStealPriority(pVoice, noteIdx);
+
+            if (currPrio > bestVoicePrio)
+            {
+                bestVoiceIdx = i;
+                bestVoicePrio = currPrio;
+            }
+        }
+
+        if (bestVoicePrio > 0)
+        {
+            VoiceOn(&gVoiceBank[bestVoiceIdx], noteIdx);
+        }
     }
 }
 
 /// @brief Turns note off.
 void NoteOff(uint8_t noteIdx)
 {
-    for (int i = 0; i < MIDI_POLYPHONY; i++)
+    uint32_t soundType = EXTRACT_INT_PARAM(gParameters, ASP_SOUND_TYPE);
+    if(soundType == SOUND_TYPE_MONO || soundType == SOUND_TYPE_BASS) // Mono sound type
     {
-        if (gVoiceBank[i].mPlayingNoteIdx == noteIdx)
+        if(gNoteStackIdx <= 1)
         {
-            VoiceOff(&gVoiceBank[i]);
+            VoiceOff(&gVoiceBank[0]);
+            gNoteStackIdx = 0;
+            return;
+        }
+
+        gNoteStackIdx--;
+        for (int i = 0; i < gNoteStackIdx; i++)
+        {
+            if(gNoteStack[i] == noteIdx)
+            {
+                memcpy(gNoteStack + i, gNoteStack + i + 1, (gNoteStackIdx-i)*sizeof(uint8_t));
+                return;
+            }
+        }
+
+        if(gNoteStack[gNoteStackIdx] == noteIdx)
+        {
+            VoiceOnSteal(&gVoiceBank[0], gNoteStack[gNoteStackIdx-1]);
+        }
+    }
+    else // Poly sound type
+    {
+        for (int i = 0; i < MIDI_POLYPHONY; i++)
+        {
+            if (gVoiceBank[i].mPlayingNoteIdx == noteIdx)
+            {
+                VoiceOff(&gVoiceBank[i]);
+            }
         }
     }
 }

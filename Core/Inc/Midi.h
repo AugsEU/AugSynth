@@ -12,9 +12,11 @@
 /* Constants ------------------------------------------------------------------*/
 #define MIDI_NOTE_ON 0xC0
 #define MIDI_NOTE_OFF 0x80
+#define MIDI_CLICK_ON 0xA0
+#define MIDI_CLICK_OFF 0x90
 #define MIDI_PARAM_NUM_MASK 0x7F
 
-#define MIDI_POLYPHONY 7
+#define MIDI_POLYPHONY 6
 
 
 

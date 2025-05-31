@@ -14,6 +14,9 @@
 #define DELAY_GLITCH_SIZE 2000
 #define LOUDNESS_ALPHA (0.001f)
 
+#define CLICK_PHASE_INC (262.62f * SAMPLE_PERIOD)
+#define CLICK_VOLUME (0.2f)
+
 /* ----------------------------------------------------------------------------*/
 /* Globals --------------------------------------------------------------------*/
 uint16_t gDelayBuffer[DELAY_BUFFER_LEN];
@@ -24,6 +27,8 @@ int32_t gDelayReadOffsetOffset = 0;
 Voice_t gVoiceBank[MIDI_POLYPHONY];
 Oscillator_t gLFO;
 Oscillator_t gLFOWobbler;
+Oscillator_t gClickOsc;
+bool gClickEnabled = false;
 float_t gCurrLoudness = 0.0f;
 
 extern float gParameters[128];
@@ -145,7 +150,6 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 	// Drive & Gain
 	float_t gain = gParameters[ASP_GAIN];
 	float_t drive = gParameters[ASP_DRIVE];
-	float_t drive_norm = 1.0f /((MIDI_POLYPHONY - 1.0f) * (1.0f - drive) + 1.0f);
 
 	for(int i = 0; i < MIDI_POLYPHONY; i++)
 	{
@@ -181,16 +185,20 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 			y += VoiceGetSample(&gVoiceBank[i], waveType1, waveType2, tune1, tune2, shape1, shape2, lfoValue);
 		}
 
+		/*--- Click ---*/
+		if(gClickEnabled)
+		{
+			OscPhaseInc(&gClickOsc, CLICK_PHASE_INC);
+			y += gClickOsc.mPhase < 0.5f ? CLICK_VOLUME : -CLICK_VOLUME;
+		}
+
 		/*--- Measure loudness ---*/
-		float_t sampLoud = fabsf(y) * 2.0f;
+		float_t sampLoud = fabsf(y) * 6.0f;
 		if(sampLoud > 1.0f) sampLoud = 1.0f;
-		sampLoud -= 1.0f;
-		sampLoud *= sampLoud;
-		sampLoud *= sampLoud;
-		sampLoud = (1.0f - sampLoud);
 		gCurrLoudness = LOUDNESS_ALPHA * sampLoud + (1.0f - LOUDNESS_ALPHA) * gCurrLoudness;
 
 		/*--- Filter ---*/
+		y *= (1.0f / (MIDI_POLYPHONY + 1.0f)); // Normalise
 		filterFreqMod = ComputeLfoMult(lfoValue, filterFreqLfo);
 		filterFreqMod *=  ComputeLoudnessMult(gCurrLoudness, filterFollow);
 		SetFilterFreq(filterFreq * filterFreqMod);
@@ -199,7 +207,6 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 
 		/*--- Drive & Gain ---*/
 		y = drive * DrivenSample(y) + (1.0f - drive) * y;
-		y *= drive_norm;
 		y *= gain;
 		
 		/*--- Delay ---*/

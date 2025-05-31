@@ -53,7 +53,7 @@ float_t ShapeWave(float_t waveValue, float_t waveShape)
     return waveValue * g;
 }
 
-#define DRIVE_K (1.0f)
+#define DRIVE_K (0.9f)
 #define DRIVE_M (4.0f*DRIVE_K + 1.0f)
 
 #define DRIVE_A (DRIVE_K*DRIVE_M - DRIVE_K)
@@ -71,7 +71,7 @@ float_t DrivenSample(float_t sample)
             return -1.0f;
         }
         p = DRIVE_B + DRIVE_A*sample;
-        p *= p;
+        p *= sample;
         p += DRIVE_C;
         return -p*sample;
     }
@@ -82,7 +82,7 @@ float_t DrivenSample(float_t sample)
     }
 
     p = DRIVE_B + DRIVE_A*sample;
-    p *= p;
+    p *= sample;
     p += DRIVE_C;
     return p*sample;
 }

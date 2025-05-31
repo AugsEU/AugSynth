@@ -52,7 +52,16 @@
 #define ASP_LFO_VCF_CUTOFF      37 // -0.5 to 0.5
 #define ASP_LFO_VCF_RES         38 // -0.5 to 0.5
 
-#define ASP_NUM_PARAMS          39
+#define ASP_SOUND_TYPE          39 // Int param
+
+#define ASP_NUM_PARAMS          40
+
+// Sound types
+#define SOUND_TYPE_POLY         0
+#define SOUND_TYPE_MONO         1
+#define SOUND_TYPE_PIANO        2
+#define SOUND_TYPE_BASS         3
+#define NUM_SOUNT_TYPES         4
 
 // Delay modes
 #define DELAY_MODE_OFF          0

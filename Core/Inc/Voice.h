@@ -30,6 +30,7 @@ typedef struct
 void VoiceInit(Voice_t* pVoice);
 
 void VoiceOn(Voice_t* pVoice, uint8_t playingNoteIdx);
+void VoiceOnSteal(Voice_t* pVoice, uint8_t playingNoteIdx);
 void VoiceOff(Voice_t* pVoice);
 
 void VoicePrepSampleBlock(Voice_t* pVoice);

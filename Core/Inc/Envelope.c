@@ -1,5 +1,7 @@
 #include <Envelope.h>
 
+extern float gParameters[128];
+
 void EnvInit(Envelope_t* pEnv)
 {
     pEnv->mSection = ES_OFF; 
@@ -31,7 +33,15 @@ void EnvNextSample(Envelope_t* pEnv)
         if(pEnv->mVolume <= pEnv->mSustain)
         {
             pEnv->mVolume = pEnv->mSustain;
-            pEnv->mSection = ES_SUSTAIN;
+            uint32_t soundType = EXTRACT_INT_PARAM(gParameters, ASP_SOUND_TYPE);
+            if(soundType == SOUND_TYPE_POLY || soundType == SOUND_TYPE_MONO)
+            {
+                pEnv->mSection = ES_SUSTAIN;
+            }
+            else
+            {
+                pEnv->mSection = ES_RELEASE;
+            }
         }
         break;
     case ES_SUSTAIN:
