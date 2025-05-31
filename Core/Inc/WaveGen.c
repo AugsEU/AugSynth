@@ -15,7 +15,7 @@
 #define LOUDNESS_ALPHA (0.001f)
 
 #define CLICK_PHASE_INC (262.62f * SAMPLE_PERIOD)
-#define CLICK_VOLUME (0.2f)
+#define CLICK_VOLUME (500)
 
 /* ----------------------------------------------------------------------------*/
 /* Globals --------------------------------------------------------------------*/
@@ -185,13 +185,6 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 			y += VoiceGetSample(&gVoiceBank[i], waveType1, waveType2, tune1, tune2, shape1, shape2, lfoValue);
 		}
 
-		/*--- Click ---*/
-		if(gClickEnabled)
-		{
-			OscPhaseInc(&gClickOsc, CLICK_PHASE_INC);
-			y += gClickOsc.mPhase < 0.5f ? CLICK_VOLUME : -CLICK_VOLUME;
-		}
-
 		/*--- Measure loudness ---*/
 		float_t sampLoud = fabsf(y) * 6.0f;
 		if(sampLoud > 1.0f) sampLoud = 1.0f;
@@ -231,6 +224,13 @@ void FillSoundBuffer(uint16_t* buf, uint16_t samples)
 			delayReadHead = (gDelayWriteHead + DELAY_BUFFER_LEN - gDelayReadOffset) % DELAY_BUFFER_LEN;
 			delayValue = (int16_t)gDelayBuffer[delayReadHead];
 			value += delayValue;
+		}
+
+		/*--- Click ---*/
+		if(gClickEnabled)
+		{
+			OscPhaseInc(&gClickOsc, CLICK_PHASE_INC);
+			value += gClickOsc.mPhase < 0.5f ? CLICK_VOLUME : -CLICK_VOLUME;
 		}
 
 		/*--- Write to buffer ---*/
