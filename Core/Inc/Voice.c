@@ -91,7 +91,7 @@ float_t VoiceGetSample(Voice_t* pVoice,
 
     float_t osc1TuneLFO = FastUnitExp(gParameters[ASP_LFO_OSC1_TUNE] * lfoValue);
     float_t osc2TuneLFO = FastUnitExp(gParameters[ASP_LFO_OSC2_TUNE] * lfoValue);
-    float_t dt =  pVoice->mFreq;
+    float_t dt = pVoice->mFreq;
 
     // Osc1
     OscPhaseInc(&pVoice->mOsc1, dt * tune1 * osc1TuneLFO);
@@ -156,14 +156,14 @@ float_t VoiceGetSample(Voice_t* pVoice,
 #endif
 }
 
-int VoiceStealPriority(Voice_t* pVoice, uint8_t noteIdx)
+float_t VoiceStealPriority(Voice_t* pVoice, uint8_t noteIdx)
 {
-    int priority = 2 - (int)pVoice->mEnv1.mSection;
-    priority += 2 - (int)pVoice->mEnv2.mSection;
+    float_t priority = (float_t)pVoice->mEnv1.mSection * (1.0f-pVoice->mEnv1.mVolume);
+    priority += (float_t)pVoice->mEnv2.mSection * (1.0f-pVoice->mEnv2.mVolume);
 
     if (pVoice->mPlayingNoteIdx == noteIdx)
     {
-        priority += 5;
+        priority += 9.0f;
     }
 
     return priority;

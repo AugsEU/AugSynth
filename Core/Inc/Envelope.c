@@ -45,6 +45,10 @@ void EnvNextSample(Envelope_t* pEnv)
         }
         break;
     case ES_SUSTAIN:
+        if(pEnv->mSustain == 0.0f)
+        {
+            pEnv->mSection = ES_OFF;
+        }
         break; // Something else has to set this release.
     case ES_RELEASE:
         pEnv->mVolume -= pEnv->mRelease;
@@ -52,10 +56,6 @@ void EnvNextSample(Envelope_t* pEnv)
         {
             pEnv->mVolume = 0.0f;
             pEnv->mSection = ES_OFF;
-        }
-        else if(pEnv->mVolume > pEnv->mSustain)
-        {
-            pEnv->mVolume -= 0.001f; // Quickly drop down to sustain level
         }
         break;
     }

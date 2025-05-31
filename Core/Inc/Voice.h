@@ -40,6 +40,6 @@ float_t VoiceGetSample(Voice_t* pVoice,
     float_t shape1, float_t shape2,
     float_t lfoValue);
 
-int VoiceStealPriority(Voice_t* pVoice, uint8_t noteIdx);
+float_t VoiceStealPriority(Voice_t* pVoice, uint8_t noteIdx);
 
 #endif // __VOICE_H

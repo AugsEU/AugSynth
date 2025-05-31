@@ -88,16 +88,17 @@ void NoteOn(uint8_t noteIdx, uint8_t velocity)
     else // Poly sound type
     {
         int bestVoiceIdx = 0;
-        int bestVoicePrio = 0;
+        float_t bestVoicePrio = 0;
         for (int i = 0; i < MIDI_POLYPHONY; i++)
         {
             Voice_t* pVoice = &gVoiceBank[i];
-            int currPrio = VoiceStealPriority(pVoice, noteIdx);
+            float_t currPrio = VoiceStealPriority(pVoice, noteIdx);
 
             if (currPrio > bestVoicePrio)
             {
                 bestVoiceIdx = i;
                 bestVoicePrio = currPrio;
+                if(currPrio >= 8.0f) break;
             }
         }
 

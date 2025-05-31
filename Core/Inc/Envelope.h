@@ -13,11 +13,12 @@
 /* Types ----------------------------------------------------------------------*/
 typedef enum EnvelopeSection
 {
-    ES_OFF,
-    ES_RELEASE,
     ES_ATTACK,
     ES_DECAY,
-    ES_SUSTAIN
+    ES_SUSTAIN,
+    ES_RELEASE,
+    ES_OFF
+
 } EnvelopeSection_t;
 
 typedef struct
